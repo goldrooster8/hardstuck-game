@@ -191,17 +191,16 @@
       <div id="playersArea"></div>
       <button onclick="leaveRoom()" style="margin-top:20px">Leave Game</button>
     </div>
-
-    <!-- Game Over overlay will be injected -->
   </div>
 
   <!-- Firebase SDKs (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
   <script>
     // ==============================================
-    // YOUR FIREBASE CONFIG – REPLACE WITH YOUR OWN
+    // YOUR FIREBASE CONFIG (with corrected databaseURL)
     // ==============================================
     const firebaseConfig = {
       apiKey: "AIzaSyANEQA7aOltYtY-MHYwEpz17zzhBLppDBc",
@@ -216,6 +215,12 @@
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+    // Silent anonymous authentication
+    firebase.auth().signInAnonymously().catch(err => {
+      console.error("Anonymous auth failed:", err);
+      alert("Connection error. Please refresh the page.");
+    });
 
     // ------- Global State -------
     let myPlayerId = null;
@@ -240,7 +245,6 @@
       document.getElementById('createPanel').classList.add('hidden');
       document.getElementById('joinPanel').classList.add('hidden');
       document.getElementById('chooseAction').classList.remove('hidden');
-      // clear inputs
       document.getElementById('createName').value = '';
       document.getElementById('joinName').value = '';
       document.getElementById('joinCode').value = '';
@@ -266,7 +270,6 @@
       if (!name) return alert('Please enter a username.');
       myName = name;
 
-      // Generate a random 4-letter room code
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       let code = '';
       for (let i = 0; i < 4; i++) {
@@ -274,14 +277,12 @@
       }
       currentRoom = code;
 
-      // Check if room already exists (unlikely)
       db.ref(`rooms/${code}`).once('value', snap => {
         if (snap.exists()) {
           alert('Room code collision, trying again...');
-          createRoom(); // retry
+          createRoom();
           return;
         }
-        // Create room with host as first player
         const playerRef = db.ref(`rooms/${code}/players`).push();
         myPlayerId = playerRef.key;
         const updates = {};
@@ -303,7 +304,6 @@
       myName = name;
       currentRoom = code;
 
-      // Check if room exists
       db.ref(`rooms/${code}`).once('value', snap => {
         if (!snap.exists()) {
           alert('Room not found.');
@@ -314,7 +314,6 @@
           alert('Game already started.');
           return;
         }
-        // Add player to room
         const playerRef = db.ref(`rooms/${code}/players`).push();
         myPlayerId = playerRef.key;
         playerRef.set({ name, pile: [], ready: true }).then(() => {
@@ -330,7 +329,6 @@
       db.ref(`rooms/${room}`).on('value', snapshot => {
         const data = snapshot.val();
         if (!data) {
-          // Room deleted
           alert('Room closed.');
           leaveRoom();
           return;
@@ -361,7 +359,6 @@
       else if (playerCount === 3) deckSize = 28;
       else if (playerCount === 4) deckSize = 40;
 
-      // Build and shuffle deck
       let deck = [];
       for (let i = 1; i <= 100; i++) deck.push(i);
       for (let i = deck.length - 1; i > 0; i--) {
@@ -382,7 +379,6 @@
       updates[`rooms/${currentRoom}/gameState/winner`] = null;
       updates[`rooms/${currentRoom}/turnOrder`] = turnOrder;
 
-      // Reset piles
       playerIds.forEach(pid => {
         updates[`rooms/${currentRoom}/players/${pid}/pile`] = [];
       });
@@ -491,7 +487,6 @@
         updates[`rooms/${currentRoom}/gameState/turnDeadline`] = newDeadline;
         db.ref().update(updates);
 
-        // End game if deck empty
         const deck = gs.deck || [];
         if (deck.length === 0 && gs.phase !== 'ended') {
           endGame(gs);
@@ -548,7 +543,6 @@
       window._turnOrder = data.turnOrder || Object.keys(players);
 
       if (!gs.started) {
-        // Waiting room
         const playerIds = Object.keys(players);
         document.getElementById('playerList').innerHTML = playerIds
           .map(pid => `<li>👤 ${players[pid].name}</li>`)
@@ -561,7 +555,7 @@
           document.getElementById('startBtn').classList.add('hidden');
           document.getElementById('waitingMessage').classList.remove('hidden');
         }
-        showWaitingRoom(currentRoom); // make sure waiting room is visible
+        showWaitingRoom(currentRoom);
       } else if (gs.phase === 'ended') {
         const winner = players[gs.winner];
         const winnerName = winner ? winner.name : 'Unknown';
@@ -573,7 +567,6 @@
           </div>`;
         showGameBoard();
       } else {
-        // Playing
         updateGameUI(players, gs);
         showGameBoard();
       }
@@ -584,18 +577,15 @@
       const currentId = turnOrder[gs.currentPlayerIndex];
       document.getElementById('turnPlayer').textContent = players[currentId] ? players[currentId].name : '?';
 
-      // Timer
       const deadline = gs.turnDeadline || 0;
       updateTimer(deadline);
 
-      // Draw pile
       const deck = gs.deck || [];
       const drawPileDiv = document.getElementById('drawPile');
       drawPileDiv.textContent = deck.length > 0 ? '?' : '0';
       drawPileDiv.style.background = deck.length > 0 ? '#444' : '#222';
       document.getElementById('drawBtn').disabled = !isMyTurn() || deck.length === 0;
 
-      // Discard piles
       const discards = gs.discards || [[], [], []];
       const discDiv = document.getElementById('discardPiles');
       discDiv.innerHTML = '';
@@ -614,7 +604,6 @@
         discDiv.appendChild(div);
       }
 
-      // Players' areas
       const area = document.getElementById('playersArea');
       area.innerHTML = '';
       for (let pid of turnOrder) {
@@ -637,7 +626,6 @@
     }
 
     function valueToColor(value) {
-      // 1 → blue (240°), 100 → pink (330°)
       const hue = 240 - ((value - 1) * 90 / 99);
       return `hsl(${hue}, 70%, 60%)`;
     }
@@ -674,12 +662,13 @@
       myPlayerId = null;
       window._gameState = null;
       window._turnOrder = [];
-      // Reset all UI panels
+      // Reset UI panels
       document.getElementById('chooseAction').classList.remove('hidden');
       document.getElementById('createPanel').classList.add('hidden');
       document.getElementById('joinPanel').classList.add('hidden');
       document.getElementById('waitingArea').classList.add('hidden');
       document.getElementById('gameArea').classList.add('hidden');
+      // Restore gameArea original structure
       document.getElementById('gameArea').innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
           <div><strong>Turn:</strong> <span id="turnPlayer"></span></div>
