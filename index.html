@@ -5,59 +5,194 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hardstuck</title>
   <style>
-    * { box-sizing: border-box; font-family: sans-serif; }
-    body { max-width: 800px; margin: 20px auto; padding: 10px; }
-    .hidden { display: none !important; }
-    #loginArea, #waitingArea, #gameArea { margin: 20px 0; }
-    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
-    .card { display: inline-block; width: 50px; height: 70px; border-radius: 6px;
-            margin: 3px; text-align: center; line-height: 70px; font-weight: bold;
-            color: white; border: 1px solid #333; position: relative; }
-    .card .count { position: absolute; top: -8px; right: -8px; background: black;
-                   border-radius: 50%; width: 20px; height: 20px; font-size: 12px;
-                   line-height: 20px; text-align: center; }
-    .discard-pile { display: inline-block; margin: 0 10px; vertical-align: top; }
-    .player-area { margin: 20px 0; border-top: 1px solid #ccc; padding: 10px; }
-    .timer { font-size: 1.5em; font-weight: bold; color: red; }
-    input { padding: 8px; margin: 5px; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      background-color: #121212;
+      color: #eee;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    button {
+      background-color: #333;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      margin: 8px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #555;
+    }
+
+    button:disabled {
+      background-color: #1e1e1e;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    input {
+      padding: 12px;
+      margin: 10px 5px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #1e1e1e;
+      color: white;
+      font-size: 1rem;
+      width: 200px;
+    }
+
+    .card {
+      display: inline-block;
+      width: 60px;
+      height: 80px;
+      border-radius: 8px;
+      margin: 4px;
+      text-align: center;
+      line-height: 80px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: white;
+      border: 1px solid #555;
+      background: #333;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .discard-pile {
+      display: inline-block;
+      margin: 10px 15px;
+      vertical-align: top;
+    }
+
+    .player-area {
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 15px 0;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .player-name {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .timer {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: #ff5555;
+      margin-left: 15px;
+    }
+
+    .room-code {
+      font-size: 2rem;
+      font-weight: bold;
+      letter-spacing: 4px;
+      background: #1e1e1e;
+      padding: 10px 20px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+
+    .label {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
   </style>
 </head>
 <body>
-
-  <!-- Login / Join -->
-  <div id="loginArea">
-    <h2>Hardstuck</h2>
-    <input id="nameInput" placeholder="Your name" maxlength="15" />
-    <input id="roomInput" placeholder="Room code" maxlength="20" />
-    <br/>
-    <button onclick="joinRoom()">Create / Join Room</button>
-  </div>
-
-  <!-- Waiting room -->
-  <div id="waitingArea" class="hidden">
-    <h3>Room: <span id="roomDisplay"></span></h3>
-    <ul id="playerList"></ul>
-    <button id="startBtn" onclick="startGame()" class="hidden">Start Game</button>
-    <p>Waiting for players...</p>
-  </div>
-
-  <!-- Game board -->
-  <div id="gameArea" class="hidden">
-    <div>
-      <strong>Turn:</strong> <span id="turnPlayer"></span>
-      <span id="timerDisplay" class="timer"></span>
+  <div id="app">
+    <!-- Step 1: Choose Create or Join -->
+    <div id="chooseAction">
+      <h1>🎴 Hardstuck</h1>
+      <p style="margin:20px 0">A game of risk and timing</p>
+      <button onclick="showCreate()">Create Room</button>
+      <button onclick="showJoin()">Join Room</button>
     </div>
-    <div>
-      <h4>Draw Pile</h4>
-      <div id="drawPile" class="card" style="background:gray;">?</div>
-      <button id="drawBtn" onclick="drawCard()">Draw</button>
+
+    <!-- Step 2a: Create Room (username) -->
+    <div id="createPanel" class="hidden">
+      <h2>Create Room</h2>
+      <input id="createName" placeholder="Your username" maxlength="15" />
+      <br/>
+      <button onclick="createRoom()">Create</button>
+      <button onclick="backToMain()">Back</button>
     </div>
-    <div>
-      <h4>Discard Piles</h4>
-      <div id="discardPiles"></div>
+
+    <!-- Step 2b: Join Room (username + code) -->
+    <div id="joinPanel" class="hidden">
+      <h2>Join Room</h2>
+      <input id="joinName" placeholder="Your username" maxlength="15" />
+      <input id="joinCode" placeholder="Room code" maxlength="10" style="text-transform:uppercase" />
+      <br/>
+      <button onclick="joinRoom()">Join</button>
+      <button onclick="backToMain()">Back</button>
     </div>
-    <div id="playersArea"></div>
-    <button onclick="leaveRoom()">Leave Game</button>
+
+    <!-- Waiting Room -->
+    <div id="waitingArea" class="hidden">
+      <h2>Room: <span id="roomDisplay" class="room-code"></span></h2>
+      <p class="label">Share this code with friends</p>
+      <ul id="playerList" style="list-style:none; margin:20px 0"></ul>
+      <button id="startBtn" onclick="startGame()" class="hidden">Start Game</button>
+      <p id="waitingMessage">Waiting for players...</p>
+    </div>
+
+    <!-- Game Area -->
+    <div id="gameArea" class="hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+        <div>
+          <strong>Turn:</strong> <span id="turnPlayer"></span>
+        </div>
+        <div>
+          <span id="timerDisplay" class="timer">30s</span>
+        </div>
+      </div>
+
+      <div style="background:#1e1e1e; border-radius:12px; padding:15px; margin:15px 0">
+        <div style="display:flex; align-items:center; gap:20px">
+          <div>
+            <div class="label">Draw Pile</div>
+            <div id="drawPile" class="card" style="background:#444; width:70px; height:90px; line-height:90px">?</div>
+            <br/>
+            <button id="drawBtn" onclick="drawCard()">Draw</button>
+          </div>
+          <div style="flex-grow:1">
+            <div class="label">Discard Piles</div>
+            <div id="discardPiles" style="display:flex; justify-content:center; gap:20px; margin-top:10px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="playersArea"></div>
+      <button onclick="leaveRoom()" style="margin-top:20px">Leave Game</button>
+    </div>
+
+    <!-- Game Over overlay will be injected -->
   </div>
 
   <!-- Firebase SDKs (compat) -->
@@ -66,11 +201,12 @@
 
   <script>
     // ==============================================
-    // YOUR FIREBASE CONFIG – already filled
+    // YOUR FIREBASE CONFIG – REPLACE WITH YOUR OWN
     // ==============================================
     const firebaseConfig = {
       apiKey: "AIzaSyANEQA7aOltYtY-MHYwEpz17zzhBLppDBc",
       authDomain: "hardstuck-game.firebaseapp.com",
+      databaseURL: "https://hardstuck-game-default-rtdb.firebaseio.com",
       projectId: "hardstuck-game",
       storageBucket: "hardstuck-game.firebasestorage.app",
       messagingSenderId: "1006298740610",
@@ -81,55 +217,137 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Global variables
+    // ------- Global State -------
     let myPlayerId = null;
     let myName = '';
     let currentRoom = null;
     let timerInterval = null;
+    window._gameState = null;
+    window._turnOrder = [];
 
-    // ========================
-    //  ROOM MANAGEMENT
-    // ========================
-    function joinRoom() {
-      const name = document.getElementById('nameInput').value.trim();
-      const room = document.getElementById('roomInput').value.trim().toUpperCase();
-      if (!name || !room) return alert('Enter name and room code.');
+    // ------- UI Navigation -------
+    function showCreate() {
+      document.getElementById('chooseAction').classList.add('hidden');
+      document.getElementById('createPanel').classList.remove('hidden');
+    }
+
+    function showJoin() {
+      document.getElementById('chooseAction').classList.add('hidden');
+      document.getElementById('joinPanel').classList.remove('hidden');
+    }
+
+    function backToMain() {
+      document.getElementById('createPanel').classList.add('hidden');
+      document.getElementById('joinPanel').classList.add('hidden');
+      document.getElementById('chooseAction').classList.remove('hidden');
+      // clear inputs
+      document.getElementById('createName').value = '';
+      document.getElementById('joinName').value = '';
+      document.getElementById('joinCode').value = '';
+    }
+
+    function showWaitingRoom(roomCode) {
+      document.getElementById('chooseAction').classList.add('hidden');
+      document.getElementById('createPanel').classList.add('hidden');
+      document.getElementById('joinPanel').classList.add('hidden');
+      document.getElementById('waitingArea').classList.remove('hidden');
+      document.getElementById('gameArea').classList.add('hidden');
+      document.getElementById('roomDisplay').textContent = roomCode;
+    }
+
+    function showGameBoard() {
+      document.getElementById('waitingArea').classList.add('hidden');
+      document.getElementById('gameArea').classList.remove('hidden');
+    }
+
+    // ------- Room Actions -------
+    function createRoom() {
+      const name = document.getElementById('createName').value.trim();
+      if (!name) return alert('Please enter a username.');
       myName = name;
-      currentRoom = room;
 
-      // Listen to the room state
+      // Generate a random 4-letter room code
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let code = '';
+      for (let i = 0; i < 4; i++) {
+        code += letters[Math.floor(Math.random() * letters.length)];
+      }
+      currentRoom = code;
+
+      // Check if room already exists (unlikely)
+      db.ref(`rooms/${code}`).once('value', snap => {
+        if (snap.exists()) {
+          alert('Room code collision, trying again...');
+          createRoom(); // retry
+          return;
+        }
+        // Create room with host as first player
+        const playerRef = db.ref(`rooms/${code}/players`).push();
+        myPlayerId = playerRef.key;
+        const updates = {};
+        updates[`rooms/${code}/players/${myPlayerId}`] = { name, pile: [], ready: true };
+        updates[`rooms/${code}/gameState/started`] = false;
+        db.ref().update(updates).then(() => {
+          showWaitingRoom(code);
+          listenToRoom(code);
+        }).catch(err => {
+          alert('Failed to create room: ' + err.message);
+        });
+      });
+    }
+
+    function joinRoom() {
+      const name = document.getElementById('joinName').value.trim();
+      const code = document.getElementById('joinCode').value.trim().toUpperCase();
+      if (!name || !code) return alert('Enter username and room code.');
+      myName = name;
+      currentRoom = code;
+
+      // Check if room exists
+      db.ref(`rooms/${code}`).once('value', snap => {
+        if (!snap.exists()) {
+          alert('Room not found.');
+          return;
+        }
+        const data = snap.val();
+        if (data.gameState && data.gameState.started) {
+          alert('Game already started.');
+          return;
+        }
+        // Add player to room
+        const playerRef = db.ref(`rooms/${code}/players`).push();
+        myPlayerId = playerRef.key;
+        playerRef.set({ name, pile: [], ready: true }).then(() => {
+          showWaitingRoom(code);
+          listenToRoom(code);
+        }).catch(err => {
+          alert('Failed to join: ' + err.message);
+        });
+      });
+    }
+
+    function listenToRoom(room) {
       db.ref(`rooms/${room}`).on('value', snapshot => {
         const data = snapshot.val();
         if (!data) {
-          // Room doesn't exist yet – create it when we add the first player
-          createRoom(room, name);
+          // Room deleted
+          alert('Room closed.');
+          leaveRoom();
           return;
         }
         updateUI(data);
       });
     }
 
-    function createRoom(room, name) {
-      // Add this player as the first player
-      const playerRef = db.ref(`rooms/${room}/players`).push();
-      myPlayerId = playerRef.key;
-      playerRef.set({ name, pile: [], ready: true });
-      db.ref(`rooms/${room}/gameState`).set({ started: false });
-    }
-
-    // ========================
-    //  GAME START
-    // ========================
+    // ------- Game Flow -------
     function startGame() {
-      if (!currentRoom) return;
-      // Only the host (first player) can start the game
+      if (!currentRoom || !myPlayerId) return;
       db.ref(`rooms/${currentRoom}/players`).once('value', snap => {
         const players = snap.val();
         const playerIds = Object.keys(players);
         if (playerIds.length < 2) return alert('Need at least 2 players.');
-        if (myPlayerId !== playerIds[0]) return alert('Only the room creator can start.');
+        if (myPlayerId !== playerIds[0]) return alert('Only the room host can start.');
 
-        // Mark game as started
         db.ref(`rooms/${currentRoom}/gameState/started`).set(true);
         initializeGame(players);
       });
@@ -143,30 +361,28 @@
       else if (playerCount === 3) deckSize = 28;
       else if (playerCount === 4) deckSize = 40;
 
-      // Build deck: cards 1..100, shuffle, take deckSize
+      // Build and shuffle deck
       let deck = [];
       for (let i = 1; i <= 100; i++) deck.push(i);
-      // Fisher–Yates shuffle
       for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
       }
       deck = deck.slice(0, deckSize);
 
-      const turnOrder = playerIds; // order of joining
-      const firstPlayerIndex = 0;
+      const turnOrder = playerIds;
       const deadline = firebase.database.ServerValue.TIMESTAMP + 30000;
 
       const updates = {};
       updates[`rooms/${currentRoom}/gameState/deck`] = deck;
       updates[`rooms/${currentRoom}/gameState/discards`] = [[], [], []];
-      updates[`rooms/${currentRoom}/gameState/currentPlayerIndex`] = firstPlayerIndex;
+      updates[`rooms/${currentRoom}/gameState/currentPlayerIndex`] = 0;
       updates[`rooms/${currentRoom}/gameState/turnDeadline`] = deadline;
       updates[`rooms/${currentRoom}/gameState/phase`] = 'playing';
       updates[`rooms/${currentRoom}/gameState/winner`] = null;
       updates[`rooms/${currentRoom}/turnOrder`] = turnOrder;
 
-      // Reset all players' piles
+      // Reset piles
       playerIds.forEach(pid => {
         updates[`rooms/${currentRoom}/players/${pid}/pile`] = [];
       });
@@ -174,48 +390,40 @@
       db.ref().update(updates);
     }
 
-    // ========================
-    //  GAME ACTIONS
-    // ========================
+    // ------- Turn Actions -------
     function drawCard() {
       if (!isMyTurn()) return;
-      const roomRef = db.ref(`rooms/${currentRoom}/gameState`);
-      roomRef.child('deck').once('value', deckSnap => {
+      db.ref(`rooms/${currentRoom}/gameState/deck`).once('value', deckSnap => {
         const deck = deckSnap.val() || [];
         if (deck.length === 0) return;
         const card = deck[0];
         const newDeck = deck.slice(1);
 
-        const myPileRef = db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`);
-        myPileRef.once('value', pileSnap => {
+        db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`).once('value', pileSnap => {
           const pile = pileSnap.val() || [];
           const topCard = pile.length > 0 ? pile[pile.length - 1] : null;
 
           if (pile.length === 0) {
-            // First card: ask player to keep or discard
-            const keep = confirm(`You drew ${card}. Keep it?`);
+            const keep = confirm(`You drew ${card}. Keep it as your starting card?`);
             const updates = {};
             updates[`rooms/${currentRoom}/gameState/deck`] = newDeck;
             if (keep) {
               pile.push(card);
               updates[`rooms/${currentRoom}/players/${myPlayerId}/pile`] = pile;
             } else {
-              // discard to pile 0
               discardToPile(0, card);
             }
             db.ref().update(updates);
             endTurn();
           } else {
             if (card <= topCard) {
-              // forced discard
-              alert(`Card ${card} is not higher than your top card ${topCard}. Discarding.`);
+              alert(`Card ${card} is not higher than your top card ${topCard}. Discarded.`);
               const updates = {};
               updates[`rooms/${currentRoom}/gameState/deck`] = newDeck;
               discardToPile(1, card);
               db.ref().update(updates);
               endTurn();
             } else {
-              // higher: choose to keep or discard
               const keep = confirm(`You drew ${card} (higher than ${topCard}). Keep it?`);
               const updates = {};
               updates[`rooms/${currentRoom}/gameState/deck`] = newDeck;
@@ -234,7 +442,6 @@
     }
 
     function discardToPile(pileIndex, card) {
-      // Helper to push a card onto a discard pile
       const discRef = db.ref(`rooms/${currentRoom}/gameState/discards/${pileIndex}`);
       discRef.transaction(disc => {
         if (disc === null) disc = [];
@@ -245,14 +452,12 @@
 
     function takeDiscard(pileIndex) {
       if (!isMyTurn()) return;
-      const discRef = db.ref(`rooms/${currentRoom}/gameState/discards/${pileIndex}`);
-      discRef.once('value', discSnap => {
+      db.ref(`rooms/${currentRoom}/gameState/discards/${pileIndex}`).once('value', discSnap => {
         const disc = discSnap.val() || [];
-        if (disc.length === 0) return alert('Pile empty.');
+        if (disc.length === 0) return alert('That discard pile is empty.');
         const card = disc[disc.length - 1];
 
-        const myPileRef = db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`);
-        myPileRef.once('value', pileSnap => {
+        db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`).once('value', pileSnap => {
           const pile = pileSnap.val() || [];
           const topCard = pile.length > 0 ? pile[pile.length - 1] : null;
 
@@ -260,7 +465,6 @@
             return alert('Card is not higher than your top card.');
           }
 
-          // Valid take
           pile.push(card);
           const newDisc = disc.slice(0, -1);
           const updates = {};
@@ -273,11 +477,10 @@
     }
 
     function endTurn() {
-      const roomRef = db.ref(`rooms/${currentRoom}/gameState`);
-      roomRef.once('value', snap => {
+      db.ref(`rooms/${currentRoom}/gameState`).once('value', snap => {
         const gs = snap.val();
         if (!gs || !gs.turnOrder) return;
-        const turnOrder = gs.turnOrder || [];
+        const turnOrder = gs.turnOrder;
         const playerCount = turnOrder.length;
         if (playerCount === 0) return;
         const nextIndex = (gs.currentPlayerIndex + 1) % playerCount;
@@ -288,7 +491,7 @@
         updates[`rooms/${currentRoom}/gameState/turnDeadline`] = newDeadline;
         db.ref().update(updates);
 
-        // Check if draw pile is empty → end game
+        // End game if deck empty
         const deck = gs.deck || [];
         if (deck.length === 0 && gs.phase !== 'ended') {
           endGame(gs);
@@ -307,7 +510,7 @@
         const players = playersSnap.val();
         let maxCards = -1;
         let winnerId = null;
-        let winnerTop = 101; // for tiebreaker (lowest top card wins)
+        let winnerTop = 101;
 
         for (let pid in players) {
           const pile = players[pid].pile || [];
@@ -335,49 +538,44 @@
       return currentId === myPlayerId;
     }
 
-    // ========================
-    //  UI UPDATES
-    // ========================
+    // ------- UI Update -------
     function updateUI(data) {
       if (!data) return;
       const players = data.players || {};
       const gs = data.gameState || {};
 
-      // Save globally for timer/turn checks
       window._gameState = gs;
       window._turnOrder = data.turnOrder || Object.keys(players);
 
       if (!gs.started) {
-        // Show waiting room
-        document.getElementById('loginArea').classList.add('hidden');
-        document.getElementById('waitingArea').classList.remove('hidden');
-        document.getElementById('gameArea').classList.add('hidden');
-        document.getElementById('roomDisplay').textContent = currentRoom;
-        const list = document.getElementById('playerList');
-        list.innerHTML = '';
-        for (let pid in players) {
-          const li = document.createElement('li');
-          li.textContent = players[pid].name;
-          list.appendChild(li);
-        }
-        // Show start button only to first player and if >= 2 players
+        // Waiting room
         const playerIds = Object.keys(players);
-        if (playerIds.length >= 2 && myPlayerId === playerIds[0]) {
+        document.getElementById('playerList').innerHTML = playerIds
+          .map(pid => `<li>👤 ${players[pid].name}</li>`)
+          .join('');
+        const hostId = playerIds[0];
+        if (playerIds.length >= 2 && myPlayerId === hostId) {
           document.getElementById('startBtn').classList.remove('hidden');
+          document.getElementById('waitingMessage').classList.add('hidden');
         } else {
           document.getElementById('startBtn').classList.add('hidden');
+          document.getElementById('waitingMessage').classList.remove('hidden');
         }
+        showWaitingRoom(currentRoom); // make sure waiting room is visible
       } else if (gs.phase === 'ended') {
-        document.getElementById('waitingArea').classList.add('hidden');
-        document.getElementById('gameArea').classList.remove('hidden');
-        const winnerName = players[gs.winner] ? players[gs.winner].name : 'Unknown';
-        document.getElementById('gameArea').innerHTML = `<h2>Game Over!</h2><p>Winner: ${winnerName}</p>`;
+        const winner = players[gs.winner];
+        const winnerName = winner ? winner.name : 'Unknown';
+        document.getElementById('gameArea').innerHTML = `
+          <div style="background:#1e1e1e; border-radius:12px; padding:30px; margin-top:50px">
+            <h2>🏆 Game Over</h2>
+            <p style="font-size:1.5rem">Winner: <strong>${winnerName}</strong></p>
+            <button onclick="leaveRoom()">Leave</button>
+          </div>`;
+        showGameBoard();
       } else {
-        // Game playing
-        document.getElementById('loginArea').classList.add('hidden');
-        document.getElementById('waitingArea').classList.add('hidden');
-        document.getElementById('gameArea').classList.remove('hidden');
+        // Playing
         updateGameUI(players, gs);
+        showGameBoard();
       }
     }
 
@@ -392,7 +590,9 @@
 
       // Draw pile
       const deck = gs.deck || [];
-      document.getElementById('drawPile').textContent = deck.length > 0 ? '?' : 'Empty';
+      const drawPileDiv = document.getElementById('drawPile');
+      drawPileDiv.textContent = deck.length > 0 ? '?' : '0';
+      drawPileDiv.style.background = deck.length > 0 ? '#444' : '#222';
       document.getElementById('drawBtn').disabled = !isMyTurn() || deck.length === 0;
 
       // Discard piles
@@ -405,7 +605,7 @@
         const div = document.createElement('div');
         div.className = 'discard-pile';
         div.innerHTML = `
-          <div class="card" style="background:${top ? valueToColor(top) : 'gray'}">
+          <div class="card" style="background:${top ? valueToColor(top) : '#333'}; width:60px; height:80px; line-height:80px">
             ${top !== null ? top : '-'}
           </div>
           <br/>
@@ -414,7 +614,7 @@
         discDiv.appendChild(div);
       }
 
-      // Players' areas (show all cards, labels, card count)
+      // Players' areas
       const area = document.getElementById('playersArea');
       area.innerHTML = '';
       for (let pid of turnOrder) {
@@ -422,7 +622,7 @@
         const pile = player.pile || [];
         const div = document.createElement('div');
         div.className = 'player-area';
-        div.innerHTML = `<strong>${player.name}</strong> (${pile.length} cards)`;
+        div.innerHTML = `<div class="player-name">${player.name} <span class="label">(${pile.length} cards)</span></div>`;
         const cardsDiv = document.createElement('div');
         pile.forEach(val => {
           const cardEl = document.createElement('span');
@@ -437,21 +637,22 @@
     }
 
     function valueToColor(value) {
-      // Blue (240°) → Green (120°) → Yellow (60°) → Red (0°) → Pink (330°)
-      // Map 1..100 to 240 → 330
-      const hue = 240 - ((value - 1) * (240 - 330) / 99); // 240 - (value-1)*90/99
+      // 1 → blue (240°), 100 → pink (330°)
+      const hue = 240 - ((value - 1) * 90 / 99);
       return `hsl(${hue}, 70%, 60%)`;
     }
 
     function updateTimer(deadline) {
       clearInterval(timerInterval);
-      if (!deadline) return;
+      if (!deadline) {
+        document.getElementById('timerDisplay').textContent = '--';
+        return;
+      }
 
       const tick = () => {
         const now = Date.now();
         const remaining = Math.max(0, deadline - now);
         document.getElementById('timerDisplay').textContent = Math.ceil(remaining / 1000) + 's';
-
         if (remaining <= 0) {
           clearInterval(timerInterval);
           if (isMyTurn()) {
@@ -468,9 +669,39 @@
         db.ref(`rooms/${currentRoom}/players/${myPlayerId}`).remove();
         db.ref(`rooms/${currentRoom}`).off();
       }
+      clearInterval(timerInterval);
       currentRoom = null;
       myPlayerId = null;
-      location.reload();
+      window._gameState = null;
+      window._turnOrder = [];
+      // Reset all UI panels
+      document.getElementById('chooseAction').classList.remove('hidden');
+      document.getElementById('createPanel').classList.add('hidden');
+      document.getElementById('joinPanel').classList.add('hidden');
+      document.getElementById('waitingArea').classList.add('hidden');
+      document.getElementById('gameArea').classList.add('hidden');
+      document.getElementById('gameArea').innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+          <div><strong>Turn:</strong> <span id="turnPlayer"></span></div>
+          <div><span id="timerDisplay" class="timer">30s</span></div>
+        </div>
+        <div style="background:#1e1e1e; border-radius:12px; padding:15px; margin:15px 0">
+          <div style="display:flex; align-items:center; gap:20px">
+            <div>
+              <div class="label">Draw Pile</div>
+              <div id="drawPile" class="card" style="background:#444; width:70px; height:90px; line-height:90px">?</div>
+              <br/>
+              <button id="drawBtn" onclick="drawCard()">Draw</button>
+            </div>
+            <div style="flex-grow:1">
+              <div class="label">Discard Piles</div>
+              <div id="discardPiles" style="display:flex; justify-content:center; gap:20px; margin-top:10px"></div>
+            </div>
+          </div>
+        </div>
+        <div id="playersArea"></div>
+        <button onclick="leaveRoom()" style="margin-top:20px">Leave Game</button>
+      `;
     }
   </script>
 </body>
