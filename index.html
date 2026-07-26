@@ -210,11 +210,11 @@
     .center {
       position: absolute;
       left: 50%;
-      top: 50%;
+      top: 46%;
       transform: translate(-50%, -50%);
-      width: min(690px, 86vw);
+      width: min(520px, 86vw);
       display: grid;
-      gap: 18px;
+      gap: 16px;
       justify-items: center;
       z-index: 2;
     }
@@ -226,6 +226,17 @@
       gap: 18px;
       flex-wrap: wrap;
       align-items: start;
+    }
+
+    .table-stack {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+      width: 100%;
+    }
+
+    #discards.center-row {
+      max-width: 390px;
     }
 
     .deck-zone, .discard-zone, .drawn-zone {
@@ -271,11 +282,17 @@
     }
 
     .drawn-zone {
+      position: absolute;
+      left: calc(50% + 135px);
+      bottom: 7%;
+      z-index: 4;
+      transform: translateY(0);
       min-width: min(440px, 92vw);
       padding: 14px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: rgba(17, 17, 24, .92);
+      box-shadow: var(--shadow);
     }
 
     .drawn-actions {
@@ -344,6 +361,14 @@
       text-shadow: 0 1px 1px rgba(0,0,0,.6);
     }
 
+    .fly-card {
+      position: fixed;
+      z-index: 30;
+      pointer-events: none;
+      transition: transform .42s cubic-bezier(.2, .86, .28, 1), opacity .42s ease;
+      will-change: transform, opacity;
+    }
+
     .ended {
       position: fixed;
       inset: 0;
@@ -376,6 +401,13 @@
       .center {
         top: 420px;
         width: min(100%, 430px);
+      }
+      .drawn-zone {
+        left: 50%;
+        bottom: 210px;
+        width: min(360px, calc(100vw - 24px));
+        min-width: 0;
+        transform: translateX(-50%);
       }
       .player {
         width: 44vw;
@@ -440,7 +472,7 @@
     <section id="table" class="table">
       <div id="playersRing"></div>
       <div class="center">
-        <div class="center-row">
+        <div class="table-stack">
           <div class="deck-zone">
             <div id="deckCard" class="card back">?</div>
             <button id="drawBtn" class="primary">Draw</button>
@@ -499,7 +531,11 @@
       serverOffset: 0,
       discardMode: false,
       timerId: null,
-      roomRef: null
+      roomRef: null,
+      previousRoom: null,
+      seenDrawnKey: null,
+      seenPileSizes: {},
+      lastDrawnRect: null
     };
 
     const $ = (id) => document.getElementById(id);
@@ -696,6 +732,7 @@
       if (state.roomRef) state.roomRef.off();
       state.roomRef = db.ref(`rooms/${state.roomCode}`);
       state.roomRef.on("value", (snap) => {
+        const previousRoom = state.room;
         state.room = snap.val();
         if (!state.room) {
           localStorage.removeItem("hardstuckRoomCode");
@@ -707,10 +744,12 @@
         if (state.room.gameState && state.room.gameState.started) {
           showScreen("game");
           renderGame();
+          detectAnimations(previousRoom, state.room);
         } else {
           showScreen("lobby");
           renderLobby();
         }
+        state.previousRoom = state.room;
       });
     }
 
@@ -741,6 +780,7 @@
       $("turnText").textContent = gs.phase === "ended" ? "Game over" : `${current ? current.name : "Player"}'s turn`;
       $("phaseText").textContent = `${phaseText}${myTurn ? " - your move" : ""}`;
       $("deckCount").textContent = `${Array.isArray(gs.deck) ? gs.deck.length : 0} in deck`;
+      $("drawBtn").hidden = !(myTurn && gs.turnPhase === "action");
       $("drawBtn").disabled = !(myTurn && gs.turnPhase === "action" && Array.isArray(gs.deck) && gs.deck.length > 0);
       renderDiscards(gs, me, myTurn);
       renderDrawn(gs, me, myTurn);
@@ -756,14 +796,17 @@
         const top = pile.length ? pile[pile.length - 1] : null;
         const zone = document.createElement("div");
         zone.className = "discard-zone";
+        zone.dataset.discardIndex = index;
         zone.appendChild(makeCard(top, "card"));
         const btn = document.createElement("button");
         if (state.discardMode) {
           btn.textContent = "Discard here";
+          btn.hidden = !(myTurn && gs.turnPhase === "deciding");
           btn.disabled = !(myTurn && gs.turnPhase === "deciding" && validDiscardIndexes(gs.discards).includes(index));
           btn.onclick = () => discardDrawn(index);
         } else {
           btn.textContent = "Take";
+          btn.hidden = !(myTurn && gs.turnPhase === "action" && canTake(top, me));
           btn.disabled = !(myTurn && gs.turnPhase === "action" && canTake(top, me));
           btn.onclick = () => takeDiscard(index);
         }
@@ -785,10 +828,13 @@
       }
       $("drawnCard").replaceWith(makeCard(gs.drawnCard, "card"));
       document.querySelector("#drawnZone .card").id = "drawnCard";
+      state.lastDrawnRect = $("drawnCard").getBoundingClientRect();
       const allowed = canKeep(gs.drawnCard, me);
       $("drawnHint").textContent = allowed ? "You may keep it or discard it." : "Lower than your top card. You must discard it.";
-      $("keepBtn").disabled = !(myTurn && allowed);
-      $("discardBtn").disabled = !myTurn;
+      $("keepBtn").hidden = !(myTurn && !state.discardMode);
+      $("discardBtn").hidden = !(myTurn && !state.discardMode);
+      $("keepBtn").disabled = !(myTurn && allowed && !state.discardMode);
+      $("discardBtn").disabled = !(myTurn && !state.discardMode);
     }
 
     function renderPlayers(players, currentId) {
@@ -797,19 +843,22 @@
       const mobile = window.matchMedia("(max-width: 760px)").matches;
       const radiusX = mobile ? 37 : 43;
       const radiusY = mobile ? 40 : 39;
-      players.forEach((player, index) => {
-        const angle = -90 + (360 * index / Math.max(players.length, 1));
+      const meIndex = Math.max(0, players.findIndex((player) => player.id === state.playerKey));
+      const visualPlayers = players.slice(meIndex).concat(players.slice(0, meIndex));
+      visualPlayers.forEach((player, index) => {
+        const angle = 90 + (360 * index / Math.max(visualPlayers.length, 1));
         const x = 50 + radiusX * Math.cos(angle * Math.PI / 180);
         const y = 50 + radiusY * Math.sin(angle * Math.PI / 180);
         const el = document.createElement("article");
         el.className = `player${player.id === state.playerKey ? " me" : ""}${player.id === currentId ? " active-player" : ""}`;
+        el.dataset.playerId = player.id;
         el.style.left = `${x}%`;
         el.style.top = `${y}%`;
         const pile = Array.isArray(player.pile) ? player.pile.slice().sort((a, b) => a - b) : [];
         el.innerHTML = `
           <div class="player-head">
             <div class="player-name">${escapeHtml(player.name)}</div>
-            <div class="count">${pile.length} cards${topCard(player) == null ? "" : ` · top ${topCard(player)}`}</div>
+            <div class="count">${pile.length} cards${topCard(player) == null ? "" : ` - top ${topCard(player)}`}</div>
           </div>
           <div class="mini-cards"></div>
         `;
@@ -825,6 +874,70 @@
       el.textContent = value;
       el.style.background = cardColor(value);
       return el;
+    }
+
+    function detectAnimations(previousRoom, room) {
+      if (!previousRoom || !room || !room.gameState || room.gameState.phase !== "playing") return;
+      const prevGs = previousRoom.gameState || {};
+      const gs = room.gameState || {};
+      const currentId = currentPlayerId(gs);
+      const drawnKey = `${currentId || ""}:${gs.drawnCard || ""}:${Array.isArray(gs.deck) ? gs.deck.length : 0}`;
+      if (gs.turnPhase === "deciding" && gs.drawnCard != null && state.seenDrawnKey !== drawnKey) {
+        state.seenDrawnKey = drawnKey;
+        setTimeout(() => flyCard(gs.drawnCard, $("deckCard"), $("drawnCard")), 40);
+      }
+      if (gs.turnPhase !== "deciding") state.seenDrawnKey = null;
+
+      const prevPlayers = previousRoom.players || {};
+      const currPlayers = room.players || {};
+      Object.keys(currPlayers).forEach((playerId) => {
+        const prevPile = Array.isArray(prevPlayers[playerId] && prevPlayers[playerId].pile) ? prevPlayers[playerId].pile : [];
+        const currPile = Array.isArray(currPlayers[playerId].pile) ? currPlayers[playerId].pile : [];
+        if (currPile.length <= prevPile.length) return;
+        const added = currPile[currPile.length - 1];
+        const source = sourceForAddedCard(added, prevGs, gs);
+        const target = document.querySelector(`.player[data-player-id="${cssEscape(playerId)}"] .mini-cards`);
+        if (source && target) setTimeout(() => flyCard(added, source, target), 40);
+      });
+    }
+
+    function sourceForAddedCard(card, prevGs, gs) {
+      if (prevGs && prevGs.drawnCard === card) return state.lastDrawnRect || $("drawnCard");
+      const prevDiscards = normalizeDiscards(prevGs && prevGs.discards);
+      const currDiscards = normalizeDiscards(gs && gs.discards);
+      for (let i = 0; i < 3; i++) {
+        const prevTop = prevDiscards[i][prevDiscards[i].length - 1];
+        if (prevTop === card && currDiscards[i].length === prevDiscards[i].length - 1) {
+          const zone = document.querySelector(`.discard-zone[data-discard-index="${i}"]`);
+          return zone && zone.querySelector(".card");
+        }
+      }
+      return $("deckCard");
+    }
+
+    function flyCard(value, sourceEl, targetEl) {
+      if (!sourceEl || !targetEl) return;
+      const sourceRect = typeof sourceEl.getBoundingClientRect === "function" ? sourceEl.getBoundingClientRect() : sourceEl;
+      const targetRect = targetEl.getBoundingClientRect();
+      if (!sourceRect.width || !sourceRect.height || !targetRect.width || !targetRect.height) return;
+      const card = makeCard(value, "card fly-card");
+      card.style.left = `${sourceRect.left}px`;
+      card.style.top = `${sourceRect.top}px`;
+      card.style.width = `${sourceRect.width}px`;
+      card.style.height = `${sourceRect.height}px`;
+      document.body.appendChild(card);
+      const dx = targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
+      const dy = targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+      requestAnimationFrame(() => {
+        card.style.transform = `translate(${dx}px, ${dy}px) scale(.45)`;
+        card.style.opacity = "0";
+      });
+      setTimeout(() => card.remove(), 480);
+    }
+
+    function cssEscape(value) {
+      if (window.CSS && CSS.escape) return CSS.escape(value);
+      return String(value).replace(/["\\]/g, "\\$&");
     }
 
     function renderResults(players, gs) {
@@ -913,6 +1026,7 @@
     }
 
     async function keepDrawn() {
+      $("drawnZone").hidden = true;
       await transactRoom((room) => {
         const gs = room.gameState;
         if (!isMyAction(room, "deciding") || gs.drawnCard == null) return room;
@@ -925,6 +1039,7 @@
     }
 
     async function discardDrawn(index) {
+      $("drawnZone").hidden = true;
       await transactRoom((room) => {
         const gs = room.gameState;
         if (!isMyAction(room, "deciding") || gs.drawnCard == null) return room;
@@ -1002,6 +1117,8 @@
     $("keepBtn").onclick = keepDrawn;
     $("discardBtn").onclick = () => {
       state.discardMode = true;
+      $("keepBtn").hidden = true;
+      $("discardBtn").hidden = true;
       renderGame();
     };
     $("copyRoom").onclick = async () => {
