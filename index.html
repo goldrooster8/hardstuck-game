@@ -171,10 +171,15 @@
       position: relative;
       z-index: 4;
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
+      grid-template-columns: auto 1fr auto; /* changed: left buttons, center status, right timer */
       align-items: center;
       gap: 14px;
       min-height: 58px;
+    }
+
+    .topbar .left-buttons {
+      display: flex;
+      gap: 10px;
     }
 
     .status {
@@ -219,30 +224,35 @@
       z-index: 2;
     }
 
-    .center-row {
+    /* New layout for draw pile + discards */
+    .draw-discard-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
       width: 100%;
+    }
+
+    .deck-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .discard-row {
       display: flex;
       justify-content: center;
-      gap: 18px;
+      gap: 24px;
       flex-wrap: wrap;
-      align-items: start;
+      align-items: flex-start;
     }
 
-    .table-stack {
-      display: grid;
-      justify-items: center;
-      gap: 18px;
-      width: 100%;
-    }
-
-    #discards.center-row {
-      max-width: 390px;
-    }
-
-    .deck-zone, .discard-zone, .drawn-zone {
-      display: grid;
-      justify-items: center;
-      gap: 10px;
+    .discard-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
     }
 
     .card {
@@ -283,16 +293,20 @@
 
     .drawn-zone {
       position: absolute;
-      left: calc(50% + 135px);
+      left: 50%;
       bottom: 7%;
+      transform: translateX(-50%);
       z-index: 4;
-      transform: translateY(0);
       min-width: min(440px, 92vw);
       padding: 14px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: rgba(17, 17, 24, .92);
       box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
     }
 
     .drawn-actions {
@@ -386,7 +400,7 @@
       .screen { padding: 16px; }
       .game { padding: 10px; overflow: auto; }
       .topbar {
-        grid-template-columns: 1fr auto;
+        grid-template-columns: auto 1fr auto; /* keep left buttons, center status, timer */
         align-items: start;
       }
       .status {
@@ -403,11 +417,7 @@
         width: min(100%, 430px);
       }
       .drawn-zone {
-        left: 50%;
         bottom: 210px;
-        width: min(360px, calc(100vw - 24px));
-        min-width: 0;
-        transform: translateX(-50%);
       }
       .player {
         width: 44vw;
@@ -462,7 +472,10 @@
 
   <main id="game" class="screen game">
     <header class="topbar">
-      <button id="copyRoom" class="ghost">Room <span id="gameRoomCode"></span></button>
+      <div class="left-buttons">
+        <button id="copyRoom" class="ghost">Room <span id="gameRoomCode"></span></button>
+        <button id="leaveGame" class="ghost">Leave</button>
+      </div>
       <div class="status">
         <div id="turnText" class="turn">Waiting</div>
         <div id="phaseText" class="muted"></div>
@@ -472,13 +485,13 @@
     <section id="table" class="table">
       <div id="playersRing"></div>
       <div class="center">
-        <div class="table-stack">
+        <div class="draw-discard-group">
           <div class="deck-zone">
             <div id="deckCard" class="card back">?</div>
             <button id="drawBtn" class="primary">Draw</button>
             <div id="deckCount" class="pile-label"></div>
           </div>
-          <div id="discards" class="center-row"></div>
+          <div id="discards" class="discard-row"></div>
         </div>
         <div id="drawnZone" class="drawn-zone" hidden>
           <div class="pile-label">Drawn card</div>
@@ -1125,6 +1138,12 @@
       try { await navigator.clipboard.writeText(state.roomCode); } catch (_) {}
     };
     $("backHome").onclick = () => {
+      localStorage.clear();
+      location.reload();
+    };
+
+    // New Leave button during the game
+    $("leaveGame").onclick = () => {
       localStorage.clear();
       location.reload();
     };
