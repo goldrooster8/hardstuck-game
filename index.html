@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hardstuck</title>
+  <style>
+    * { box-sizing: border-box; font-family: sans-serif; }
+    body { max-width: 800px; margin: 20px auto; padding: 10px; }
+    .hidden { display: none !important; }
+    #loginArea, #waitingArea, #gameArea { margin: 20px 0; }
+    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    .card { display: inline-block; width: 50px; height: 70px; border-radius: 6px;
+            margin: 3px; text-align: center; line-height: 70px; font-weight: bold;
+            color: white; border: 1px solid #333; position: relative; }
+    .card .count { position: absolute; top: -8px; right: -8px; background: black;
+                   border-radius: 50%; width: 20px; height: 20px; font-size: 12px;
+                   line-height: 20px; text-align: center; }
+    .discard-pile { display: inline-block; margin: 0 10px; vertical-align: top; }
+    .player-area { margin: 20px 0; border-top: 1px solid #ccc; padding: 10px; }
+    .timer { font-size: 1.5em; font-weight: bold; color: red; }
+    input { padding: 8px; margin: 5px; }
+  </style>
+</head>
+<body>
+
+  <!-- Login / Join -->
+  <div id="loginArea">
+    <h2>Hardstuck</h2>
+    <input id="nameInput" placeholder="Your name" maxlength="15" />
+    <input id="roomInput" placeholder="Room code" maxlength="20" />
+    <br/>
+    <button onclick="joinRoom()">Create / Join Room</button>
+  </div>
+
+  <!-- Waiting room -->
+  <div id="waitingArea" class="hidden">
+    <h3>Room: <span id="roomDisplay"></span></h3>
+    <ul id="playerList"></ul>
+    <button id="startBtn" onclick="startGame()" class="hidden">Start Game</button>
+    <p>Waiting for players...</p>
+  </div>
+
+  <!-- Game board -->
+  <div id="gameArea" class="hidden">
+    <div>
+      <strong>Turn:</strong> <span id="turnPlayer"></span>
+      <span id="timerDisplay" class="timer"></span>
+    </div>
+    <div>
+      <h4>Draw Pile</h4>
+      <div id="drawPile" class="card" style="background:gray;">?</div>
+      <button id="drawBtn" onclick="drawCard()">Draw</button>
+    </div>
+    <div>
+      <h4>Discard Piles</h4>
+      <div id="discardPiles"></div>
+    </div>
+    <div id="playersArea"></div>
+    <button onclick="leaveRoom()">Leave Game</button>
+  </div>
+
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+  <script>
+    // ==============================================
+    // YOUR FIREBASE CONFIG – already filled
+    // ==============================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyANEQA7aOltYtY-MHYwEpz17zzhBLppDBc",
+      authDomain: "hardstuck-game.firebaseapp.com",
+      projectId: "hardstuck-game",
+      storageBucket: "hardstuck-game.firebasestorage.app",
+      messagingSenderId: "1006298740610",
+      appId: "1:1006298740610:web:5af1dec86271607eb3019b"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Global variables
+    let myPlayerId = null;
+    let myName = '';
+    let currentRoom = null;
+    let timerInterval = null;
+
+    // ========================
+    //  ROOM MANAGEMENT
+    // ========================
+    function joinRoom() {
+      const name = document.getElementById('nameInput').value.trim();
+      const room = document.getElementById('roomInput').value.trim().toUpperCase();
+      if (!name || !room) return alert('Enter name and room code.');
+      myName = name;
+      currentRoom = room;
+
+      // Listen to the room state
+      db.ref(`rooms/${room}`).on('value', snapshot => {
+        const data = snapshot.val();
+        if (!data) {
+          // Room doesn't exist yet – create it when we add the first player
+          createRoom(room, name);
+          return;
+        }
+        updateUI(data);
+      });
+    }
+
+    function createRoom(room, name) {
+      // Add this player as the first player
+      const playerRef = db.ref(`rooms/${room}/players`).push();
+      myPlayerId = playerRef.key;
+      playerRef.set({ name, pile: [], ready: true });
+      db.ref(`rooms/${room}/gameState`).set({ started: false });
+    }
+
+    // ========================
+    //  GAME START
+    // ========================
+    function startGame() {
+      if (!currentRoom) return;
+      // Only the host (first player) can start the game
+      db.ref(`rooms/${currentRoom}/players`).once('value', snap => {
+        const players = snap.val();
+        const playerIds = Object.keys(players);
+        if (playerIds.length < 2) return alert('Need at least 2 players.');
+        if (myPlayerId !== playerIds[0]) return alert('Only the room creator can start.');
+
+        // Mark game as started
+        db.ref(`rooms/${currentRoom}/gameState/started`).set(true);
+        initializeGame(players);
+      });
+    }
+
+    function initializeGame(players) {
+      const playerIds = Object.keys(players);
+      const playerCount = playerIds.length;
+      let deckSize = 50;
+      if (playerCount === 2) deckSize = 16;
+      else if (playerCount === 3) deckSize = 28;
+      else if (playerCount === 4) deckSize = 40;
+
+      // Build deck: cards 1..100, shuffle, take deckSize
+      let deck = [];
+      for (let i = 1; i <= 100; i++) deck.push(i);
+      // Fisher–Yates shuffle
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      deck = deck.slice(0, deckSize);
+
+      const turnOrder = playerIds; // order of joining
+      const firstPlayerIndex = 0;
+      const deadline = firebase.database.ServerValue.TIMESTAMP + 30000;
+
+      const updates = {};
+      updates[`rooms/${currentRoom}/gameState/deck`] = deck;
+      updates[`rooms/${currentRoom}/gameState/discards`] = [[], [], []];
+      updates[`rooms/${currentRoom}/gameState/currentPlayerIndex`] = firstPlayerIndex;
+      updates[`rooms/${currentRoom}/gameState/turnDeadline`] = deadline;
+      updates[`rooms/${currentRoom}/gameState/phase`] = 'playing';
+      updates[`rooms/${currentRoom}/gameState/winner`] = null;
+      updates[`rooms/${currentRoom}/turnOrder`] = turnOrder;
+
+      // Reset all players' piles
+      playerIds.forEach(pid => {
+        updates[`rooms/${currentRoom}/players/${pid}/pile`] = [];
+      });
+
+      db.ref().update(updates);
+    }
+
+    // ========================
+    //  GAME ACTIONS
+    // ========================
+    function drawCard() {
+      if (!isMyTurn()) return;
+      const roomRef = db.ref(`rooms/${currentRoom}/gameState`);
+      roomRef.child('deck').once('value', deckSnap => {
+        const deck = deckSnap.val() || [];
+        if (deck.length === 0) return;
+        const card = deck[0];
+        const newDeck = deck.slice(1);
+
+        const myPileRef = db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`);
+        myPileRef.once('value', pileSnap => {
+          const pile = pileSnap.val() || [];
+          const topCard = pile.length > 0 ? pile[pile.length - 1] : null;
+
+          if (pile.length === 0) {
+            // First card: ask player to keep or discard
+            const keep = confirm(`You drew ${card}. Keep it?`);
+            const updates = {};
+            updates[`rooms/${currentRoom}/gameState/deck`] = newDeck;
+            if (keep) {
+              pile.push(card);
+              updates[`rooms/${currentRoom}/players/${myPlayerId}/pile`] = pile;
+            } else {
+              // discard to pile 0
+              discardToPile(0, card);
+            }
+            db.ref().update(updates);
+            endTurn();
+          } else {
+            if (card <= topCard) {
+              // forced discard
+              alert(`Card ${card} is not higher than your top card ${topCard}. Discarding.`);
+              const updates = {};
+              updates[`rooms/${currentRoom}/gameState/deck`] = newDeck;
+              discardToPile(1, card);
+              db.ref().update(updates);
+              endTurn();
+            } else {
+              // higher: choose to keep or discard
+              const keep = confirm(`You drew ${card} (higher than ${topCard}). Keep it?`);
+              const updates = {};
+              updates[`rooms/${currentRoom}/gameState/deck`] = newDeck;
+              if (keep) {
+                pile.push(card);
+                updates[`rooms/${currentRoom}/players/${myPlayerId}/pile`] = pile;
+              } else {
+                discardToPile(2, card);
+              }
+              db.ref().update(updates);
+              endTurn();
+            }
+          }
+        });
+      });
+    }
+
+    function discardToPile(pileIndex, card) {
+      // Helper to push a card onto a discard pile
+      const discRef = db.ref(`rooms/${currentRoom}/gameState/discards/${pileIndex}`);
+      discRef.transaction(disc => {
+        if (disc === null) disc = [];
+        disc.push(card);
+        return disc;
+      });
+    }
+
+    function takeDiscard(pileIndex) {
+      if (!isMyTurn()) return;
+      const discRef = db.ref(`rooms/${currentRoom}/gameState/discards/${pileIndex}`);
+      discRef.once('value', discSnap => {
+        const disc = discSnap.val() || [];
+        if (disc.length === 0) return alert('Pile empty.');
+        const card = disc[disc.length - 1];
+
+        const myPileRef = db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`);
+        myPileRef.once('value', pileSnap => {
+          const pile = pileSnap.val() || [];
+          const topCard = pile.length > 0 ? pile[pile.length - 1] : null;
+
+          if (pile.length > 0 && card <= topCard) {
+            return alert('Card is not higher than your top card.');
+          }
+
+          // Valid take
+          pile.push(card);
+          const newDisc = disc.slice(0, -1);
+          const updates = {};
+          updates[`rooms/${currentRoom}/players/${myPlayerId}/pile`] = pile;
+          updates[`rooms/${currentRoom}/gameState/discards/${pileIndex}`] = newDisc;
+          db.ref().update(updates);
+          endTurn();
+        });
+      });
+    }
+
+    function endTurn() {
+      const roomRef = db.ref(`rooms/${currentRoom}/gameState`);
+      roomRef.once('value', snap => {
+        const gs = snap.val();
+        if (!gs || !gs.turnOrder) return;
+        const turnOrder = gs.turnOrder || [];
+        const playerCount = turnOrder.length;
+        if (playerCount === 0) return;
+        const nextIndex = (gs.currentPlayerIndex + 1) % playerCount;
+        const newDeadline = firebase.database.ServerValue.TIMESTAMP + 30000;
+
+        const updates = {};
+        updates[`rooms/${currentRoom}/gameState/currentPlayerIndex`] = nextIndex;
+        updates[`rooms/${currentRoom}/gameState/turnDeadline`] = newDeadline;
+        db.ref().update(updates);
+
+        // Check if draw pile is empty → end game
+        const deck = gs.deck || [];
+        if (deck.length === 0 && gs.phase !== 'ended') {
+          endGame(gs);
+        }
+      });
+    }
+
+    function skipTurn() {
+      if (!isMyTurn()) return;
+      alert('Time’s up! Turn skipped.');
+      endTurn();
+    }
+
+    function endGame(gs) {
+      db.ref(`rooms/${currentRoom}/players`).once('value', playersSnap => {
+        const players = playersSnap.val();
+        let maxCards = -1;
+        let winnerId = null;
+        let winnerTop = 101; // for tiebreaker (lowest top card wins)
+
+        for (let pid in players) {
+          const pile = players[pid].pile || [];
+          const count = pile.length;
+          const top = count > 0 ? pile[count - 1] : 0;
+          if (count > maxCards || (count === maxCards && top < winnerTop)) {
+            maxCards = count;
+            winnerId = pid;
+            winnerTop = top;
+          }
+        }
+
+        const updates = {};
+        updates[`rooms/${currentRoom}/gameState/phase`] = 'ended';
+        updates[`rooms/${currentRoom}/gameState/winner`] = winnerId;
+        db.ref().update(updates);
+      });
+    }
+
+    function isMyTurn() {
+      const gs = window._gameState;
+      const order = window._turnOrder;
+      if (!gs || !myPlayerId || !order) return false;
+      const currentId = order[gs.currentPlayerIndex];
+      return currentId === myPlayerId;
+    }
+
+    // ========================
+    //  UI UPDATES
+    // ========================
+    function updateUI(data) {
+      if (!data) return;
+      const players = data.players || {};
+      const gs = data.gameState || {};
+
+      // Save globally for timer/turn checks
+      window._gameState = gs;
+      window._turnOrder = data.turnOrder || Object.keys(players);
+
+      if (!gs.started) {
+        // Show waiting room
+        document.getElementById('loginArea').classList.add('hidden');
+        document.getElementById('waitingArea').classList.remove('hidden');
+        document.getElementById('gameArea').classList.add('hidden');
+        document.getElementById('roomDisplay').textContent = currentRoom;
+        const list = document.getElementById('playerList');
+        list.innerHTML = '';
+        for (let pid in players) {
+          const li = document.createElement('li');
+          li.textContent = players[pid].name;
+          list.appendChild(li);
+        }
+        // Show start button only to first player and if >= 2 players
+        const playerIds = Object.keys(players);
+        if (playerIds.length >= 2 && myPlayerId === playerIds[0]) {
+          document.getElementById('startBtn').classList.remove('hidden');
+        } else {
+          document.getElementById('startBtn').classList.add('hidden');
+        }
+      } else if (gs.phase === 'ended') {
+        document.getElementById('waitingArea').classList.add('hidden');
+        document.getElementById('gameArea').classList.remove('hidden');
+        const winnerName = players[gs.winner] ? players[gs.winner].name : 'Unknown';
+        document.getElementById('gameArea').innerHTML = `<h2>Game Over!</h2><p>Winner: ${winnerName}</p>`;
+      } else {
+        // Game playing
+        document.getElementById('loginArea').classList.add('hidden');
+        document.getElementById('waitingArea').classList.add('hidden');
+        document.getElementById('gameArea').classList.remove('hidden');
+        updateGameUI(players, gs);
+      }
+    }
+
+    function updateGameUI(players, gs) {
+      const turnOrder = window._turnOrder;
+      const currentId = turnOrder[gs.currentPlayerIndex];
+      document.getElementById('turnPlayer').textContent = players[currentId] ? players[currentId].name : '?';
+
+      // Timer
+      const deadline = gs.turnDeadline || 0;
+      updateTimer(deadline);
+
+      // Draw pile
+      const deck = gs.deck || [];
+      document.getElementById('drawPile').textContent = deck.length > 0 ? '?' : 'Empty';
+      document.getElementById('drawBtn').disabled = !isMyTurn() || deck.length === 0;
+
+      // Discard piles
+      const discards = gs.discards || [[], [], []];
+      const discDiv = document.getElementById('discardPiles');
+      discDiv.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const pile = discards[i] || [];
+        const top = pile.length > 0 ? pile[pile.length - 1] : null;
+        const div = document.createElement('div');
+        div.className = 'discard-pile';
+        div.innerHTML = `
+          <div class="card" style="background:${top ? valueToColor(top) : 'gray'}">
+            ${top !== null ? top : '-'}
+          </div>
+          <br/>
+          <button onclick="takeDiscard(${i})" ${!isMyTurn() ? 'disabled' : ''}>Take</button>
+        `;
+        discDiv.appendChild(div);
+      }
+
+      // Players' areas (show all cards, labels, card count)
+      const area = document.getElementById('playersArea');
+      area.innerHTML = '';
+      for (let pid of turnOrder) {
+        const player = players[pid];
+        const pile = player.pile || [];
+        const div = document.createElement('div');
+        div.className = 'player-area';
+        div.innerHTML = `<strong>${player.name}</strong> (${pile.length} cards)`;
+        const cardsDiv = document.createElement('div');
+        pile.forEach(val => {
+          const cardEl = document.createElement('span');
+          cardEl.className = 'card';
+          cardEl.style.background = valueToColor(val);
+          cardEl.textContent = val;
+          cardsDiv.appendChild(cardEl);
+        });
+        div.appendChild(cardsDiv);
+        area.appendChild(div);
+      }
+    }
+
+    function valueToColor(value) {
+      // Blue (240°) → Green (120°) → Yellow (60°) → Red (0°) → Pink (330°)
+      // Map 1..100 to 240 → 330
+      const hue = 240 - ((value - 1) * (240 - 330) / 99); // 240 - (value-1)*90/99
+      return `hsl(${hue}, 70%, 60%)`;
+    }
+
+    function updateTimer(deadline) {
+      clearInterval(timerInterval);
+      if (!deadline) return;
+
+      const tick = () => {
+        const now = Date.now();
+        const remaining = Math.max(0, deadline - now);
+        document.getElementById('timerDisplay').textContent = Math.ceil(remaining / 1000) + 's';
+
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          if (isMyTurn()) {
+            skipTurn();
+          }
+        }
+      };
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+
+    function leaveRoom() {
+      if (currentRoom && myPlayerId) {
+        db.ref(`rooms/${currentRoom}/players/${myPlayerId}`).remove();
+        db.ref(`rooms/${currentRoom}`).off();
+      }
+      currentRoom = null;
+      myPlayerId = null;
+      location.reload();
+    }
+  </script>
+</body>
+</html>
