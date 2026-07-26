@@ -5,693 +5,583 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hardstuck</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-
-    body {
-      background-color: #121212;
-      color: #eee;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      text-align: center;
-      padding: 20px;
-    }
-
-    #app {
-      width: 100%;
-      max-width: 900px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    button {
-      background-color: #333;
-      border: none;
-      color: white;
-      padding: 12px 24px;
-      margin: 8px;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background-color: #555;
-    }
-
-    button:disabled {
-      background-color: #1e1e1e;
-      color: #666;
-      cursor: not-allowed;
-    }
-
-    input {
-      padding: 12px;
-      margin: 10px 5px;
-      border-radius: 8px;
-      border: 1px solid #444;
-      background: #1e1e1e;
-      color: white;
-      font-size: 1rem;
-      width: 200px;
-    }
-
-    .card {
-      display: inline-block;
-      width: 60px;
-      height: 80px;
-      border-radius: 8px;
-      margin: 4px;
-      text-align: center;
-      line-height: 80px;
-      font-weight: bold;
-      font-size: 1.2rem;
-      color: white;
-      border: 1px solid #555;
-      background: #333;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
-
-    .discard-pile {
-      display: inline-block;
-      margin: 10px 15px;
-      vertical-align: top;
-    }
-
-    .player-area {
-      background: #1e1e1e;
-      border-radius: 12px;
-      padding: 15px;
-      margin: 15px 0;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-
-    .player-name {
-      font-weight: bold;
-      font-size: 1.1rem;
-      margin-bottom: 8px;
-    }
-
-    .timer {
-      font-size: 1.6rem;
-      font-weight: bold;
-      color: #ff5555;
-      margin-left: 15px;
-    }
-
-    .room-code {
-      font-size: 2rem;
-      font-weight: bold;
-      letter-spacing: 4px;
-      background: #1e1e1e;
-      padding: 10px 20px;
-      border-radius: 12px;
-      display: inline-block;
-    }
-
-    .label {
-      font-size: 0.9rem;
-      color: #aaa;
-    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',system-ui,sans-serif; }
+    body { background:#121212; color:#eee; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px; }
+    button { background:#333; border:none; color:white; padding:12px 24px; margin:8px; border-radius:8px; font-size:1rem; cursor:pointer; transition:0.2s; }
+    button:hover { background:#555; }
+    button:disabled { background:#1e1e1e; color:#666; cursor:not-allowed; }
+    input { padding:12px; margin:10px 5px; border-radius:8px; border:1px solid #444; background:#1e1e1e; color:white; font-size:1rem; width:200px; }
+    .hidden { display:none !important; }
+    .card { display:inline-block; width:50px; height:70px; border-radius:6px; margin:2px; text-align:center; line-height:70px; font-weight:bold; color:white; border:1px solid #555; box-shadow:0 2px 5px rgba(0,0,0,0.5); }
+    .player-area { position:absolute; background:#1e1e1e; border-radius:12px; padding:10px; box-shadow:0 0 10px rgba(0,0,0,0.5); text-align:center; min-width:160px; }
+    .player-name { font-weight:bold; margin-bottom:4px; }
+    .cards-row { display:flex; flex-wrap:wrap; justify-content:center; margin-top:4px; }
+    .timer { font-size:1.6rem; font-weight:bold; color:#ff5555; }
+    .room-code { font-size:2rem; font-weight:bold; letter-spacing:4px; background:#1e1e1e; padding:10px 20px; border-radius:12px; display:inline-block; }
+    .label { font-size:0.9rem; color:#aaa; }
+    .center-area { text-align:center; margin:20px 0; }
+    #playersCircle { position:relative; width:500px; height:500px; margin:40px auto; }
+    @media (max-width:600px) { #playersCircle { width:320px; height:320px; } }
   </style>
 </head>
 <body>
-  <div id="app">
-    <!-- Step 1: Choose Create or Join -->
-    <div id="chooseAction">
-      <h1>🎴 Hardstuck</h1>
-      <p style="margin:20px 0">A game of risk and timing</p>
-      <button onclick="showCreate()">Create Room</button>
-      <button onclick="showJoin()">Join Room</button>
-    </div>
-
-    <!-- Step 2a: Create Room (username) -->
-    <div id="createPanel" class="hidden">
-      <h2>Create Room</h2>
-      <input id="createName" placeholder="Your username" maxlength="15" />
-      <br/>
-      <button onclick="createRoom()">Create</button>
-      <button onclick="backToMain()">Back</button>
-    </div>
-
-    <!-- Step 2b: Join Room (username + code) -->
-    <div id="joinPanel" class="hidden">
-      <h2>Join Room</h2>
-      <input id="joinName" placeholder="Your username" maxlength="15" />
-      <input id="joinCode" placeholder="Room code" maxlength="10" style="text-transform:uppercase" />
-      <br/>
-      <button onclick="joinRoom()">Join</button>
-      <button onclick="backToMain()">Back</button>
-    </div>
-
-    <!-- Waiting Room -->
-    <div id="waitingArea" class="hidden">
-      <h2>Room: <span id="roomDisplay" class="room-code"></span></h2>
-      <p class="label">Share this code with friends</p>
-      <ul id="playerList" style="list-style:none; margin:20px 0"></ul>
-      <button id="startBtn" onclick="startGame()" class="hidden">Start Game</button>
-      <p id="waitingMessage">Waiting for players...</p>
-    </div>
-
-    <!-- Game Area -->
-    <div id="gameArea" class="hidden">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-        <div>
-          <strong>Turn:</strong> <span id="turnPlayer"></span>
-        </div>
-        <div>
-          <span id="timerDisplay" class="timer">30s</span>
-        </div>
-      </div>
-
-      <div style="background:#1e1e1e; border-radius:12px; padding:15px; margin:15px 0">
-        <div style="display:flex; align-items:center; gap:20px">
-          <div>
-            <div class="label">Draw Pile</div>
-            <div id="drawPile" class="card" style="background:#444; width:70px; height:90px; line-height:90px">?</div>
-            <br/>
-            <button id="drawBtn" onclick="drawCard()">Draw</button>
-          </div>
-          <div style="flex-grow:1">
-            <div class="label">Discard Piles</div>
-            <div id="discardPiles" style="display:flex; justify-content:center; gap:20px; margin-top:10px"></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="playersArea"></div>
-      <button onclick="leaveRoom()" style="margin-top:20px">Leave Game</button>
-    </div>
+<div id="app">
+  <!-- Lobby -->
+  <div id="chooseAction">
+    <h1>🎴 Hardstuck</h1>
+    <p style="margin:20px 0">A game of risk and timing</p>
+    <button onclick="showCreate()">Create Room</button>
+    <button onclick="showJoin()">Join Room</button>
+  </div>
+  <div id="createPanel" class="hidden">
+    <h2>Create Room</h2>
+    <input id="createName" placeholder="Your username" maxlength="15" />
+    <br/><button onclick="createRoom()">Create</button>
+    <button onclick="backToMain()">Back</button>
+  </div>
+  <div id="joinPanel" class="hidden">
+    <h2>Join Room</h2>
+    <input id="joinName" placeholder="Your username" maxlength="15" />
+    <input id="joinCode" placeholder="Room code" maxlength="10" style="text-transform:uppercase" />
+    <br/><button onclick="joinRoom()">Join</button>
+    <button onclick="backToMain()">Back</button>
+  </div>
+  <div id="waitingArea" class="hidden">
+    <h2>Room: <span id="roomDisplay" class="room-code"></span></h2>
+    <p class="label">Share this code with friends</p>
+    <ul id="playerList" style="list-style:none; margin:20px 0"></ul>
+    <button id="startBtn" onclick="startGame()" class="hidden">Start Game</button>
+    <p id="waitingMessage">Waiting for players...</p>
   </div>
 
-  <!-- Firebase SDKs (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <!-- Game Area -->
+  <div id="gameArea" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:0 20px">
+      <div><strong>Turn:</strong> <span id="turnPlayer"></span></div>
+      <div><span id="timerDisplay" class="timer">30s</span></div>
+    </div>
+    <div class="center-area">
+      <div style="display:inline-block; vertical-align:top; margin:0 20px">
+        <div class="label">Draw Pile</div>
+        <div id="drawPile" class="card" style="background:#444; width:70px; height:90px; line-height:90px">?</div>
+        <br/><button id="drawBtn" onclick="drawCard()" disabled>Draw</button>
+      </div>
+      <div style="display:inline-block; vertical-align:top; margin:0 20px">
+        <div class="label">Discard Piles</div>
+        <div id="discardPiles" style="display:flex; gap:20px; justify-content:center; margin-top:10px"></div>
+      </div>
+      <div id="drawnCardArea" style="display:inline-block; vertical-align:top; margin:0 20px; min-width:100px" class="hidden">
+        <div class="label">Drawn Card</div>
+        <div id="drawnCard" class="card" style="width:70px; height:90px; line-height:90px"></div>
+        <div id="decisionButtons">
+          <button onclick="keepDrawnCard()">Keep</button>
+          <button onclick="discardDrawnCard()">Discard</button>
+        </div>
+        <p id="discardChoiceMsg" class="hidden label" style="margin-top:5px">Choose a pile to discard to (must fill empty piles first)</p>
+      </div>
+    </div>
+    <div id="playersCircle"></div>
+    <div style="text-align:center; margin-top:20px">
+      <button onclick="leaveRoom()">Leave Game</button>
+    </div>
+  </div>
+</div>
 
-  <script>
-    // ==============================================
-    // YOUR FIREBASE CONFIG (with corrected databaseURL)
-    // ==============================================
-    const firebaseConfig = {
-      apiKey: "AIzaSyANEQA7aOltYtY-MHYwEpz17zzhBLppDBc",
-      authDomain: "hardstuck-game.firebaseapp.com",
-      databaseURL: "https://hardstuck-game-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "hardstuck-game",
-      storageBucket: "hardstuck-game.firebasestorage.app",
-      messagingSenderId: "1006298740610",
-      appId: "1:1006298740610:web:5af1dec86271607eb3019b"
-    };
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyANEQA7aOltYtY-MHYwEpz17zzhBLppDBc",
+  authDomain: "hardstuck-game.firebaseapp.com",
+  databaseURL: "https://hardstuck-game-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hardstuck-game",
+  storageBucket: "hardstuck-game.firebasestorage.app",
+  messagingSenderId: "1006298740610",
+  appId: "1:1006298740610:web:5af1dec86271607eb3019b"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+// Anonymous auth
+firebase.auth().signInAnonymously().catch(console.error);
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+// Global state
+let myPlayerId = null, myName = '', currentRoom = null;
+let timerInterval = null;
+window._gameState = null;
+window._turnOrder = [];
 
-    // Silent anonymous authentication
-    firebase.auth().signInAnonymously().catch(err => {
-      console.error("Anonymous auth failed:", err);
-      alert("Connection error. Please refresh the page.");
+// UI nav
+function showCreate() { document.getElementById('chooseAction').classList.add('hidden'); document.getElementById('createPanel').classList.remove('hidden'); }
+function showJoin() { document.getElementById('chooseAction').classList.add('hidden'); document.getElementById('joinPanel').classList.remove('hidden'); }
+function backToMain() {
+  document.getElementById('createPanel').classList.add('hidden');
+  document.getElementById('joinPanel').classList.add('hidden');
+  document.getElementById('chooseAction').classList.remove('hidden');
+}
+function showWaiting(room) {
+  document.getElementById('chooseAction').classList.add('hidden');
+  document.getElementById('createPanel').classList.add('hidden');
+  document.getElementById('joinPanel').classList.add('hidden');
+  document.getElementById('waitingArea').classList.remove('hidden');
+  document.getElementById('gameArea').classList.add('hidden');
+  document.getElementById('roomDisplay').textContent = room;
+}
+function showGame() {
+  document.getElementById('waitingArea').classList.add('hidden');
+  document.getElementById('gameArea').classList.remove('hidden');
+}
+
+// Room actions
+function createRoom() {
+  const name = document.getElementById('createName').value.trim();
+  if (!name) return alert('Enter username.');
+  myName = name;
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let code = '';
+  for (let i=0;i<4;i++) code += letters[Math.floor(Math.random()*letters.length)];
+  currentRoom = code;
+  db.ref(`rooms/${code}`).once('value', snap => {
+    if (snap.exists()) { alert('Collision, retrying...'); createRoom(); return; }
+    const playerRef = db.ref(`rooms/${code}/players`).push();
+    myPlayerId = playerRef.key;
+    const updates = {};
+    updates[`rooms/${code}/players/${myPlayerId}`] = { name, pile: [], ready:true };
+    updates[`rooms/${code}/gameState/started`] = false;
+    db.ref().update(updates).then(() => {
+      showWaiting(code);
+      listenToRoom(code);
+    }).catch(err => alert(err.message));
+  });
+}
+
+function joinRoom() {
+  const name = document.getElementById('joinName').value.trim();
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if (!name || !code) return alert('Enter name and room code.');
+  myName = name; currentRoom = code;
+  db.ref(`rooms/${code}`).once('value', snap => {
+    if (!snap.exists()) { alert('Room not found.'); return; }
+    const data = snap.val();
+    if (data.gameState && data.gameState.started) { alert('Game already started.'); return; }
+    const playerRef = db.ref(`rooms/${code}/players`).push();
+    myPlayerId = playerRef.key;
+    playerRef.set({ name, pile:[], ready:true }).then(() => {
+      showWaiting(code);
+      listenToRoom(code);
+    }).catch(err => alert(err.message));
+  });
+}
+
+function listenToRoom(room) {
+  db.ref(`rooms/${room}`).on('value', snap => {
+    const data = snap.val();
+    if (!data) { alert('Room closed.'); leaveRoom(); return; }
+    updateUI(data);
+  });
+}
+
+function startGame() {
+  if (!currentRoom || !myPlayerId) return;
+  db.ref(`rooms/${currentRoom}/players`).once('value', snap => {
+    const players = snap.val();
+    const pids = Object.keys(players);
+    if (pids.length<2) return alert('Need at least 2 players.');
+    if (myPlayerId !== pids[0]) return alert('Only host can start.');
+    db.ref(`rooms/${currentRoom}/gameState/started`).set(true);
+    initGame(players);
+  });
+}
+
+function initGame(players) {
+  const pids = Object.keys(players);
+  let deckSize = 50;
+  if (pids.length===2) deckSize=16;
+  else if (pids.length===3) deckSize=28;
+  else if (pids.length===4) deckSize=40;
+  let deck = [];
+  for (let i=1;i<=100;i++) deck.push(i);
+  for (let i=deck.length-1;i>0;i--) { const j = Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+  deck = deck.slice(0,deckSize);
+  const deadline = firebase.database.ServerValue.TIMESTAMP + 30000;
+  const updates = {};
+  updates[`rooms/${currentRoom}/gameState`] = {
+    started:true, deck, discards:[[],[],[]],
+    currentPlayerIndex:0, turnDeadline:deadline, phase:'playing',
+    turnPhase:'action', drawnCard:null, winner:null
+  };
+  updates[`rooms/${currentRoom}/turnOrder`] = pids;
+  pids.forEach(pid => { updates[`rooms/${currentRoom}/players/${pid}/pile`] = []; });
+  db.ref().update(updates);
+}
+
+// Turn actions
+function drawCard() {
+  if (!isMyTurn() || window._gameState.turnPhase !== 'action') return;
+  db.ref(`rooms/${currentRoom}/gameState/deck`).once('value', deckSnap => {
+    const deck = deckSnap.val() || [];
+    if (deck.length===0) return;
+    const card = deck[0];
+    const newDeck = deck.slice(1);
+    const deadline = firebase.database.ServerValue.TIMESTAMP + 30000;
+    db.ref(`rooms/${currentRoom}/gameState`).update({
+      deck: newDeck,
+      drawnCard: card,
+      turnPhase: 'deciding',
+      turnDeadline: deadline
     });
+    // No turn end – now player must keep/discard
+  });
+}
 
-    // ------- Global State -------
-    let myPlayerId = null;
-    let myName = '';
-    let currentRoom = null;
-    let timerInterval = null;
-    window._gameState = null;
-    window._turnOrder = [];
+function keepDrawnCard() {
+  if (!isMyTurn() || window._gameState.turnPhase !== 'deciding') return;
+  const card = window._gameState.drawnCard;
+  if (card === null) return;
+  db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`).once('value', pileSnap => {
+    const pile = pileSnap.val() || [];
+    pile.push(card);
+    const updates = {};
+    updates[`rooms/${currentRoom}/players/${myPlayerId}/pile`] = pile;
+    updates[`rooms/${currentRoom}/gameState/drawnCard`] = null;
+    updates[`rooms/${currentRoom}/gameState/turnPhase`] = 'action';
+    db.ref().update(updates);
+    endTurn();
+  });
+}
 
-    // ------- UI Navigation -------
-    function showCreate() {
-      document.getElementById('chooseAction').classList.add('hidden');
-      document.getElementById('createPanel').classList.remove('hidden');
-    }
+function discardDrawnCard() {
+  if (!isMyTurn() || window._gameState.turnPhase !== 'deciding') return;
+  const card = window._gameState.drawnCard;
+  if (card === null) return;
+  const discards = window._gameState.discards || [[],[],[]];
+  const emptyPiles = discards.map((p,i) => p.length===0 ? i : -1).filter(i => i>=0);
+  // If there are empty piles, player must choose one of them
+  if (emptyPiles.length > 0) {
+    // Show prompt to choose a pile (buttons already visible via UI)
+    document.getElementById('discardChoiceMsg').classList.remove('hidden');
+    // Update discard pile buttons to only allow empty piles
+    updateDiscardPileButtons('discard', emptyPiles);
+  } else {
+    // All piles have cards, player can choose any
+    document.getElementById('discardChoiceMsg').classList.add('hidden');
+    updateDiscardPileButtons('discard', [0,1,2]);
+  }
+}
 
-    function showJoin() {
-      document.getElementById('chooseAction').classList.add('hidden');
-      document.getElementById('joinPanel').classList.remove('hidden');
-    }
+function chooseDiscardPile(pileIndex) {
+  const card = window._gameState.drawnCard;
+  if (card === null) return;
+  const discards = window._gameState.discards || [[],[],[]];
+  const emptyPiles = discards.map((p,i) => p.length===0 ? i : -1).filter(i => i>=0);
+  if (emptyPiles.length > 0 && !emptyPiles.includes(pileIndex)) {
+    alert('You must fill an empty pile first!');
+    return;
+  }
+  // Place card on chosen pile
+  db.ref(`rooms/${currentRoom}/gameState/discards/${pileIndex}`).transaction(disc => {
+    if (disc === null) disc = [];
+    disc.push(card);
+    return disc;
+  });
+  const updates = {};
+  updates[`rooms/${currentRoom}/gameState/drawnCard`] = null;
+  updates[`rooms/${currentRoom}/gameState/turnPhase`] = 'action';
+  db.ref().update(updates);
+  endTurn();
+}
 
-    function backToMain() {
-      document.getElementById('createPanel').classList.add('hidden');
-      document.getElementById('joinPanel').classList.add('hidden');
-      document.getElementById('chooseAction').classList.remove('hidden');
-      document.getElementById('createName').value = '';
-      document.getElementById('joinName').value = '';
-      document.getElementById('joinCode').value = '';
-    }
-
-    function showWaitingRoom(roomCode) {
-      document.getElementById('chooseAction').classList.add('hidden');
-      document.getElementById('createPanel').classList.add('hidden');
-      document.getElementById('joinPanel').classList.add('hidden');
-      document.getElementById('waitingArea').classList.remove('hidden');
-      document.getElementById('gameArea').classList.add('hidden');
-      document.getElementById('roomDisplay').textContent = roomCode;
-    }
-
-    function showGameBoard() {
-      document.getElementById('waitingArea').classList.add('hidden');
-      document.getElementById('gameArea').classList.remove('hidden');
-    }
-
-    // ------- Room Actions -------
-    function createRoom() {
-      const name = document.getElementById('createName').value.trim();
-      if (!name) return alert('Please enter a username.');
-      myName = name;
-
-      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      let code = '';
-      for (let i = 0; i < 4; i++) {
-        code += letters[Math.floor(Math.random() * letters.length)];
-      }
-      currentRoom = code;
-
-      db.ref(`rooms/${code}`).once('value', snap => {
-        if (snap.exists()) {
-          alert('Room code collision, trying again...');
-          createRoom();
-          return;
-        }
-        const playerRef = db.ref(`rooms/${code}/players`).push();
-        myPlayerId = playerRef.key;
-        const updates = {};
-        updates[`rooms/${code}/players/${myPlayerId}`] = { name, pile: [], ready: true };
-        updates[`rooms/${code}/gameState/started`] = false;
-        db.ref().update(updates).then(() => {
-          showWaitingRoom(code);
-          listenToRoom(code);
-        }).catch(err => {
-          alert('Failed to create room: ' + err.message);
-        });
-      });
-    }
-
-    function joinRoom() {
-      const name = document.getElementById('joinName').value.trim();
-      const code = document.getElementById('joinCode').value.trim().toUpperCase();
-      if (!name || !code) return alert('Enter username and room code.');
-      myName = name;
-      currentRoom = code;
-
-      db.ref(`rooms/${code}`).once('value', snap => {
-        if (!snap.exists()) {
-          alert('Room not found.');
-          return;
-        }
-        const data = snap.val();
-        if (data.gameState && data.gameState.started) {
-          alert('Game already started.');
-          return;
-        }
-        const playerRef = db.ref(`rooms/${code}/players`).push();
-        myPlayerId = playerRef.key;
-        playerRef.set({ name, pile: [], ready: true }).then(() => {
-          showWaitingRoom(code);
-          listenToRoom(code);
-        }).catch(err => {
-          alert('Failed to join: ' + err.message);
-        });
-      });
-    }
-
-    function listenToRoom(room) {
-      db.ref(`rooms/${room}`).on('value', snapshot => {
-        const data = snapshot.val();
-        if (!data) {
-          alert('Room closed.');
-          leaveRoom();
-          return;
-        }
-        updateUI(data);
-      });
-    }
-
-    // ------- Game Flow -------
-    function startGame() {
-      if (!currentRoom || !myPlayerId) return;
-      db.ref(`rooms/${currentRoom}/players`).once('value', snap => {
-        const players = snap.val();
-        const playerIds = Object.keys(players);
-        if (playerIds.length < 2) return alert('Need at least 2 players.');
-        if (myPlayerId !== playerIds[0]) return alert('Only the room host can start.');
-
-        db.ref(`rooms/${currentRoom}/gameState/started`).set(true);
-        initializeGame(players);
-      });
-    }
-
-    function initializeGame(players) {
-      const playerIds = Object.keys(players);
-      const playerCount = playerIds.length;
-      let deckSize = 50;
-      if (playerCount === 2) deckSize = 16;
-      else if (playerCount === 3) deckSize = 28;
-      else if (playerCount === 4) deckSize = 40;
-
-      let deck = [];
-      for (let i = 1; i <= 100; i++) deck.push(i);
-      for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-      }
-      deck = deck.slice(0, deckSize);
-
-      const turnOrder = playerIds;
-      const deadline = firebase.database.ServerValue.TIMESTAMP + 30000;
-
+function takeDiscard(pileIndex) {
+  if (!isMyTurn() || window._gameState.turnPhase !== 'action') return;
+  db.ref(`rooms/${currentRoom}/gameState/discards/${pileIndex}`).once('value', discSnap => {
+    const disc = discSnap.val() || [];
+    if (disc.length === 0) return alert('Pile empty.');
+    const card = disc[disc.length-1];
+    db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`).once('value', pileSnap => {
+      const pile = pileSnap.val() || [];
+      const top = pile.length>0 ? pile[pile.length-1] : null;
+      if (pile.length>0 && card <= top) return alert('Card not higher than your top card.');
+      pile.push(card);
+      const newDisc = disc.slice(0,-1);
       const updates = {};
-      updates[`rooms/${currentRoom}/gameState/deck`] = deck;
-      updates[`rooms/${currentRoom}/gameState/discards`] = [[], [], []];
-      updates[`rooms/${currentRoom}/gameState/currentPlayerIndex`] = 0;
-      updates[`rooms/${currentRoom}/gameState/turnDeadline`] = deadline;
-      updates[`rooms/${currentRoom}/gameState/phase`] = 'playing';
-      updates[`rooms/${currentRoom}/gameState/winner`] = null;
-      updates[`rooms/${currentRoom}/turnOrder`] = turnOrder;
-
-      playerIds.forEach(pid => {
-        updates[`rooms/${currentRoom}/players/${pid}/pile`] = [];
-      });
-
+      updates[`rooms/${currentRoom}/players/${myPlayerId}/pile`] = pile;
+      updates[`rooms/${currentRoom}/gameState/discards/${pileIndex}`] = newDisc;
       db.ref().update(updates);
+      endTurn();
+    });
+  });
+}
+
+function endTurn() {
+  db.ref(`rooms/${currentRoom}/gameState`).once('value', snap => {
+    const gs = snap.val();
+    if (!gs || !gs.turnOrder) return;
+    const order = gs.turnOrder;
+    const nextIndex = (gs.currentPlayerIndex + 1) % order.length;
+    const deadline = firebase.database.ServerValue.TIMESTAMP + 30000;
+    const updates = {};
+    updates[`rooms/${currentRoom}/gameState/currentPlayerIndex`] = nextIndex;
+    updates[`rooms/${currentRoom}/gameState/turnDeadline`] = deadline;
+    updates[`rooms/${currentRoom}/gameState/turnPhase`] = 'action';
+    updates[`rooms/${currentRoom}/gameState/drawnCard`] = null;
+    db.ref().update(updates);
+    // Check game end after finish of last draw
+    const deck = gs.deck || [];
+    if (deck.length === 0 && gs.phase !== 'ended') {
+      endGame(gs);
     }
+  });
+}
 
-    // ------- Turn Actions -------
-    function drawCard() {
-      if (!isMyTurn()) return;
-      db.ref(`rooms/${currentRoom}/gameState/deck`).once('value', deckSnap => {
-        const deck = deckSnap.val() || [];
-        if (deck.length === 0) return;
-        const card = deck[0];
-        const newDeck = deck.slice(1);
-
-        db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`).once('value', pileSnap => {
-          const pile = pileSnap.val() || [];
-          const topCard = pile.length > 0 ? pile[pile.length - 1] : null;
-
-          if (pile.length === 0) {
-            const keep = confirm(`You drew ${card}. Keep it as your starting card?`);
-            const updates = {};
-            updates[`rooms/${currentRoom}/gameState/deck`] = newDeck;
-            if (keep) {
-              pile.push(card);
-              updates[`rooms/${currentRoom}/players/${myPlayerId}/pile`] = pile;
-            } else {
-              discardToPile(0, card);
-            }
-            db.ref().update(updates);
-            endTurn();
-          } else {
-            if (card <= topCard) {
-              alert(`Card ${card} is not higher than your top card ${topCard}. Discarded.`);
-              const updates = {};
-              updates[`rooms/${currentRoom}/gameState/deck`] = newDeck;
-              discardToPile(1, card);
-              db.ref().update(updates);
-              endTurn();
-            } else {
-              const keep = confirm(`You drew ${card} (higher than ${topCard}). Keep it?`);
-              const updates = {};
-              updates[`rooms/${currentRoom}/gameState/deck`] = newDeck;
-              if (keep) {
-                pile.push(card);
-                updates[`rooms/${currentRoom}/players/${myPlayerId}/pile`] = pile;
-              } else {
-                discardToPile(2, card);
-              }
-              db.ref().update(updates);
-              endTurn();
-            }
-          }
-        });
-      });
-    }
-
-    function discardToPile(pileIndex, card) {
-      const discRef = db.ref(`rooms/${currentRoom}/gameState/discards/${pileIndex}`);
-      discRef.transaction(disc => {
+function skipTurn() {
+  if (!isMyTurn()) return;
+  const gs = window._gameState;
+  if (gs.turnPhase === 'deciding') {
+    // Auto-discard drawn card to first valid empty pile (or pile 0 if none)
+    const card = gs.drawnCard;
+    if (card !== null) {
+      const discards = gs.discards || [[],[],[]];
+      let targetPile = 0;
+      const emptyIdx = discards.findIndex(p => p.length === 0);
+      if (emptyIdx >= 0) targetPile = emptyIdx;
+      db.ref(`rooms/${currentRoom}/gameState/discards/${targetPile}`).transaction(disc => {
         if (disc === null) disc = [];
         disc.push(card);
         return disc;
       });
     }
+    db.ref(`rooms/${currentRoom}/gameState`).update({ drawnCard: null, turnPhase: 'action' });
+  }
+  endTurn();
+}
 
-    function takeDiscard(pileIndex) {
-      if (!isMyTurn()) return;
-      db.ref(`rooms/${currentRoom}/gameState/discards/${pileIndex}`).once('value', discSnap => {
-        const disc = discSnap.val() || [];
-        if (disc.length === 0) return alert('That discard pile is empty.');
-        const card = disc[disc.length - 1];
-
-        db.ref(`rooms/${currentRoom}/players/${myPlayerId}/pile`).once('value', pileSnap => {
-          const pile = pileSnap.val() || [];
-          const topCard = pile.length > 0 ? pile[pile.length - 1] : null;
-
-          if (pile.length > 0 && card <= topCard) {
-            return alert('Card is not higher than your top card.');
-          }
-
-          pile.push(card);
-          const newDisc = disc.slice(0, -1);
-          const updates = {};
-          updates[`rooms/${currentRoom}/players/${myPlayerId}/pile`] = pile;
-          updates[`rooms/${currentRoom}/gameState/discards/${pileIndex}`] = newDisc;
-          db.ref().update(updates);
-          endTurn();
-        });
-      });
+function endGame(gs) {
+  db.ref(`rooms/${currentRoom}/players`).once('value', playersSnap => {
+    const players = playersSnap.val();
+    let maxCards=-1, winnerId=null, winnerTop=101;
+    for (let pid in players) {
+      const pile = players[pid].pile || [];
+      const count = pile.length;
+      const top = count>0 ? pile[count-1] : 0;
+      if (count>maxCards || (count===maxCards && top<winnerTop)) {
+        maxCards=count; winnerId=pid; winnerTop=top;
+      }
     }
+    db.ref(`rooms/${currentRoom}/gameState`).update({ phase:'ended', winner:winnerId });
+  });
+}
 
-    function endTurn() {
-      db.ref(`rooms/${currentRoom}/gameState`).once('value', snap => {
-        const gs = snap.val();
-        if (!gs || !gs.turnOrder) return;
-        const turnOrder = gs.turnOrder;
-        const playerCount = turnOrder.length;
-        if (playerCount === 0) return;
-        const nextIndex = (gs.currentPlayerIndex + 1) % playerCount;
-        const newDeadline = firebase.database.ServerValue.TIMESTAMP + 30000;
+function isMyTurn() {
+  const gs = window._gameState;
+  const order = window._turnOrder;
+  if (!gs || !myPlayerId || !order) return false;
+  return order[gs.currentPlayerIndex] === myPlayerId;
+}
 
-        const updates = {};
-        updates[`rooms/${currentRoom}/gameState/currentPlayerIndex`] = nextIndex;
-        updates[`rooms/${currentRoom}/gameState/turnDeadline`] = newDeadline;
-        db.ref().update(updates);
-
-        const deck = gs.deck || [];
-        if (deck.length === 0 && gs.phase !== 'ended') {
-          endGame(gs);
-        }
-      });
+// UI Update
+function updateUI(data) {
+  const players = data.players || {};
+  const gs = data.gameState || {};
+  window._gameState = gs;
+  window._turnOrder = data.turnOrder || Object.keys(players);
+  if (!gs.started) {
+    const pids = Object.keys(players);
+    document.getElementById('playerList').innerHTML = pids.map(pid => `<li>👤 ${players[pid].name}</li>`).join('');
+    if (pids.length>=2 && myPlayerId===pids[0]) {
+      document.getElementById('startBtn').classList.remove('hidden');
+      document.getElementById('waitingMessage').classList.add('hidden');
+    } else {
+      document.getElementById('startBtn').classList.add('hidden');
+      document.getElementById('waitingMessage').classList.remove('hidden');
     }
+    showWaiting(currentRoom);
+  } else if (gs.phase === 'ended') {
+    const winner = players[gs.winner];
+    const winnerName = winner ? winner.name : 'Unknown';
+    document.getElementById('gameArea').innerHTML = `
+      <div style="background:#1e1e1e; border-radius:12px; padding:30px; margin-top:50px; text-align:center">
+        <h2>🏆 Game Over</h2>
+        <p style="font-size:1.5rem">Winner: <strong>${winnerName}</strong></p>
+        <button onclick="leaveRoom()">Leave</button>
+      </div>`;
+    showGame();
+  } else {
+    updateGameUI(players, gs);
+    showGame();
+  }
+}
 
-    function skipTurn() {
-      if (!isMyTurn()) return;
-      alert('Time’s up! Turn skipped.');
-      endTurn();
+function updateGameUI(players, gs) {
+  const order = window._turnOrder;
+  const currentId = order[gs.currentPlayerIndex];
+  document.getElementById('turnPlayer').textContent = players[currentId] ? players[currentId].name : '?';
+
+  // Timer
+  const deadline = gs.turnDeadline || 0;
+  updateTimer(deadline);
+
+  // Draw pile
+  const deck = gs.deck || [];
+  const drawPileDiv = document.getElementById('drawPile');
+  drawPileDiv.textContent = deck.length>0 ? '?' : '0';
+  drawPileDiv.style.background = deck.length>0 ? '#444' : '#222';
+  document.getElementById('drawBtn').disabled = !(isMyTurn() && gs.turnPhase==='action' && deck.length>0);
+
+  // Discard piles
+  const discards = gs.discards || [[],[],[]];
+  const discDiv = document.getElementById('discardPiles');
+  discDiv.innerHTML = '';
+  for (let i=0;i<3;i++) {
+    const pile = discards[i] || [];
+    const top = pile.length>0 ? pile[pile.length-1] : null;
+    const div = document.createElement('div');
+    div.style.display = 'inline-block';
+    div.innerHTML = `
+      <div class="card" style="background:${top?valueToColor(top):'#333'}; width:60px; height:80px; line-height:80px">${top!==null?top:'-'}</div>
+      <br/><button onclick="takeDiscard(${i})" id="takeBtn${i}" ${!isMyTurn()||gs.turnPhase!=='action'?'disabled':''}>Take</button>
+    `;
+    discDiv.appendChild(div);
+  }
+
+  // Drawn card area
+  const drawnCardArea = document.getElementById('drawnCardArea');
+  const decisionBtns = document.getElementById('decisionButtons');
+  const discardChoiceMsg = document.getElementById('discardChoiceMsg');
+  if (gs.turnPhase === 'deciding' && gs.drawnCard !== null) {
+    drawnCardArea.classList.remove('hidden');
+    const drawnCardDiv = document.getElementById('drawnCard');
+    drawnCardDiv.textContent = gs.drawnCard;
+    drawnCardDiv.style.background = valueToColor(gs.drawnCard);
+    decisionBtns.classList.remove('hidden');
+    discardChoiceMsg.classList.add('hidden');
+    // Disable keep/discard if not my turn
+    if (isMyTurn()) {
+      document.querySelector('#decisionButtons button:first-child').disabled = false;
+      document.querySelector('#decisionButtons button:last-child').disabled = false;
+    } else {
+      document.querySelector('#decisionButtons button:first-child').disabled = true;
+      document.querySelector('#decisionButtons button:last-child').disabled = true;
     }
+  } else {
+    drawnCardArea.classList.add('hidden');
+    decisionBtns.classList.add('hidden');
+    discardChoiceMsg.classList.add('hidden');
+  }
 
-    function endGame(gs) {
-      db.ref(`rooms/${currentRoom}/players`).once('value', playersSnap => {
-        const players = playersSnap.val();
-        let maxCards = -1;
-        let winnerId = null;
-        let winnerTop = 101;
+  // Update discard buttons for discard choice if in deciding and discarding
+  if (gs.turnPhase === 'deciding' && isMyTurn() && gs.drawnCard !== null) {
+    // We'll manage this when discardDrawnCard() is called, so not here.
+  }
 
-        for (let pid in players) {
-          const pile = players[pid].pile || [];
-          const count = pile.length;
-          const top = count > 0 ? pile[count - 1] : 0;
-          if (count > maxCards || (count === maxCards && top < winnerTop)) {
-            maxCards = count;
-            winnerId = pid;
-            winnerTop = top;
-          }
-        }
+  // Player circle
+  renderPlayerCircle(players, order);
+}
 
-        const updates = {};
-        updates[`rooms/${currentRoom}/gameState/phase`] = 'ended';
-        updates[`rooms/${currentRoom}/gameState/winner`] = winnerId;
-        db.ref().update(updates);
-      });
+function valueToColor(value) { const hue = 240 - ((value-1)*90/99); return `hsl(${hue},70%,60%)`; }
+
+function updateTimer(deadline) {
+  clearInterval(timerInterval);
+  if (!deadline) { document.getElementById('timerDisplay').textContent = '--'; return; }
+  const tick = () => {
+    const now = Date.now();
+    const remaining = Math.max(0, deadline - now);
+    document.getElementById('timerDisplay').textContent = Math.ceil(remaining/1000)+'s';
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      if (isMyTurn()) skipTurn();
     }
+  };
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
 
-    function isMyTurn() {
+function updateDiscardPileButtons(mode, allowedPiles) {
+  // Hide/show or disable discard pile buttons according to allowedPiles
+  // This is called when we need to choose a discard pile for the drawn card.
+  // We'll overlay take buttons with discard buttons temporarily.
+  const discDiv = document.getElementById('discardPiles');
+  for (let i=0;i<3;i++) {
+    const btn = document.getElementById(`takeBtn${i}`);
+    if (!btn) continue;
+    if (allowedPiles.includes(i)) {
+      btn.textContent = 'Discard here';
+      btn.onclick = () => chooseDiscardPile(i);
+      btn.disabled = false;
+    } else {
+      btn.textContent = '—';
+      btn.disabled = true;
+    }
+  }
+}
+
+function resetDiscardButtons() {
+  for (let i=0;i<3;i++) {
+    const btn = document.getElementById(`takeBtn${i}`);
+    if (btn) {
+      btn.textContent = 'Take';
+      btn.onclick = () => takeDiscard(i);
+      // Enable/disable based on turn
       const gs = window._gameState;
-      const order = window._turnOrder;
-      if (!gs || !myPlayerId || !order) return false;
-      const currentId = order[gs.currentPlayerIndex];
-      return currentId === myPlayerId;
+      if (gs && isMyTurn() && gs.turnPhase==='action') btn.disabled = false;
+      else btn.disabled = true;
     }
+  }
+}
 
-    // ------- UI Update -------
-    function updateUI(data) {
-      if (!data) return;
-      const players = data.players || {};
-      const gs = data.gameState || {};
+function renderPlayerCircle(players, order) {
+  const container = document.getElementById('playersCircle');
+  container.innerHTML = '';
+  const n = order.length;
+  if (n === 0) return;
+  const radius = 180; // px
+  const centerX = 250, centerY = 250; // within 500x500 container
+  order.forEach((pid, idx) => {
+    const angle = (idx / n) * 2 * Math.PI - Math.PI/2; // start from top
+    const x = centerX + radius * Math.cos(angle) - 80; // offset
+    const y = centerY + radius * Math.sin(angle) - 40;
+    const player = players[pid];
+    const pile = player.pile || [];
+    const div = document.createElement('div');
+    div.className = 'player-area';
+    div.style.left = x + 'px';
+    div.style.top = y + 'px';
+    div.innerHTML = `<div class="player-name">${player.name} (${pile.length})</div>`;
+    const cardsRow = document.createElement('div');
+    cardsRow.className = 'cards-row';
+    pile.forEach(val => {
+      const cardEl = document.createElement('span');
+      cardEl.className = 'card';
+      cardEl.style.background = valueToColor(val);
+      cardEl.textContent = val;
+      cardsRow.appendChild(cardEl);
+    });
+    div.appendChild(cardsRow);
+    container.appendChild(div);
+  });
+}
 
-      window._gameState = gs;
-      window._turnOrder = data.turnOrder || Object.keys(players);
+function leaveRoom() {
+  if (currentRoom && myPlayerId) {
+    db.ref(`rooms/${currentRoom}/players/${myPlayerId}`).remove();
+    db.ref(`rooms/${currentRoom}`).off();
+  }
+  clearInterval(timerInterval);
+  currentRoom = null; myPlayerId = null;
+  window._gameState = null; window._turnOrder = [];
+  // Reset UI
+  document.getElementById('chooseAction').classList.remove('hidden');
+  document.getElementById('createPanel').classList.add('hidden');
+  document.getElementById('joinPanel').classList.add('hidden');
+  document.getElementById('waitingArea').classList.add('hidden');
+  document.getElementById('gameArea').classList.add('hidden');
+  // Restore gameArea original inner HTML (full structure) - we won't, just re-show from start
+  // For simplicity, reload page
+  location.reload();
+}
 
-      if (!gs.started) {
-        const playerIds = Object.keys(players);
-        document.getElementById('playerList').innerHTML = playerIds
-          .map(pid => `<li>👤 ${players[pid].name}</li>`)
-          .join('');
-        const hostId = playerIds[0];
-        if (playerIds.length >= 2 && myPlayerId === hostId) {
-          document.getElementById('startBtn').classList.remove('hidden');
-          document.getElementById('waitingMessage').classList.add('hidden');
-        } else {
-          document.getElementById('startBtn').classList.add('hidden');
-          document.getElementById('waitingMessage').classList.remove('hidden');
-        }
-        showWaitingRoom(currentRoom);
-      } else if (gs.phase === 'ended') {
-        const winner = players[gs.winner];
-        const winnerName = winner ? winner.name : 'Unknown';
-        document.getElementById('gameArea').innerHTML = `
-          <div style="background:#1e1e1e; border-radius:12px; padding:30px; margin-top:50px">
-            <h2>🏆 Game Over</h2>
-            <p style="font-size:1.5rem">Winner: <strong>${winnerName}</strong></p>
-            <button onclick="leaveRoom()">Leave</button>
-          </div>`;
-        showGameBoard();
-      } else {
-        updateGameUI(players, gs);
-        showGameBoard();
-      }
-    }
-
-    function updateGameUI(players, gs) {
-      const turnOrder = window._turnOrder;
-      const currentId = turnOrder[gs.currentPlayerIndex];
-      document.getElementById('turnPlayer').textContent = players[currentId] ? players[currentId].name : '?';
-
-      const deadline = gs.turnDeadline || 0;
-      updateTimer(deadline);
-
-      const deck = gs.deck || [];
-      const drawPileDiv = document.getElementById('drawPile');
-      drawPileDiv.textContent = deck.length > 0 ? '?' : '0';
-      drawPileDiv.style.background = deck.length > 0 ? '#444' : '#222';
-      document.getElementById('drawBtn').disabled = !isMyTurn() || deck.length === 0;
-
-      const discards = gs.discards || [[], [], []];
-      const discDiv = document.getElementById('discardPiles');
-      discDiv.innerHTML = '';
-      for (let i = 0; i < 3; i++) {
-        const pile = discards[i] || [];
-        const top = pile.length > 0 ? pile[pile.length - 1] : null;
-        const div = document.createElement('div');
-        div.className = 'discard-pile';
-        div.innerHTML = `
-          <div class="card" style="background:${top ? valueToColor(top) : '#333'}; width:60px; height:80px; line-height:80px">
-            ${top !== null ? top : '-'}
-          </div>
-          <br/>
-          <button onclick="takeDiscard(${i})" ${!isMyTurn() ? 'disabled' : ''}>Take</button>
-        `;
-        discDiv.appendChild(div);
-      }
-
-      const area = document.getElementById('playersArea');
-      area.innerHTML = '';
-      for (let pid of turnOrder) {
-        const player = players[pid];
-        const pile = player.pile || [];
-        const div = document.createElement('div');
-        div.className = 'player-area';
-        div.innerHTML = `<div class="player-name">${player.name} <span class="label">(${pile.length} cards)</span></div>`;
-        const cardsDiv = document.createElement('div');
-        pile.forEach(val => {
-          const cardEl = document.createElement('span');
-          cardEl.className = 'card';
-          cardEl.style.background = valueToColor(val);
-          cardEl.textContent = val;
-          cardsDiv.appendChild(cardEl);
-        });
-        div.appendChild(cardsDiv);
-        area.appendChild(div);
-      }
-    }
-
-    function valueToColor(value) {
-      const hue = 240 - ((value - 1) * 90 / 99);
-      return `hsl(${hue}, 70%, 60%)`;
-    }
-
-    function updateTimer(deadline) {
-      clearInterval(timerInterval);
-      if (!deadline) {
-        document.getElementById('timerDisplay').textContent = '--';
-        return;
-      }
-
-      const tick = () => {
-        const now = Date.now();
-        const remaining = Math.max(0, deadline - now);
-        document.getElementById('timerDisplay').textContent = Math.ceil(remaining / 1000) + 's';
-        if (remaining <= 0) {
-          clearInterval(timerInterval);
-          if (isMyTurn()) {
-            skipTurn();
-          }
-        }
-      };
-      tick();
-      timerInterval = setInterval(tick, 1000);
-    }
-
-    function leaveRoom() {
-      if (currentRoom && myPlayerId) {
-        db.ref(`rooms/${currentRoom}/players/${myPlayerId}`).remove();
-        db.ref(`rooms/${currentRoom}`).off();
-      }
-      clearInterval(timerInterval);
-      currentRoom = null;
-      myPlayerId = null;
-      window._gameState = null;
-      window._turnOrder = [];
-      // Reset UI panels
-      document.getElementById('chooseAction').classList.remove('hidden');
-      document.getElementById('createPanel').classList.add('hidden');
-      document.getElementById('joinPanel').classList.add('hidden');
-      document.getElementById('waitingArea').classList.add('hidden');
-      document.getElementById('gameArea').classList.add('hidden');
-      // Restore gameArea original structure
-      document.getElementById('gameArea').innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-          <div><strong>Turn:</strong> <span id="turnPlayer"></span></div>
-          <div><span id="timerDisplay" class="timer">30s</span></div>
-        </div>
-        <div style="background:#1e1e1e; border-radius:12px; padding:15px; margin:15px 0">
-          <div style="display:flex; align-items:center; gap:20px">
-            <div>
-              <div class="label">Draw Pile</div>
-              <div id="drawPile" class="card" style="background:#444; width:70px; height:90px; line-height:90px">?</div>
-              <br/>
-              <button id="drawBtn" onclick="drawCard()">Draw</button>
-            </div>
-            <div style="flex-grow:1">
-              <div class="label">Discard Piles</div>
-              <div id="discardPiles" style="display:flex; justify-content:center; gap:20px; margin-top:10px"></div>
-            </div>
-          </div>
-        </div>
-        <div id="playersArea"></div>
-        <button onclick="leaveRoom()" style="margin-top:20px">Leave Game</button>
-      `;
-    }
-  </script>
+// Initial hide of drawn card area
+document.getElementById('drawnCardArea').classList.add('hidden');
+</script>
 </body>
 </html>
