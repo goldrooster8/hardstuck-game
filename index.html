@@ -164,6 +164,7 @@
     .game {
       min-height: 100vh;
       padding: 16px;
+      position: relative; /* needed for absolute drawn zone */
       overflow: hidden;
     }
 
@@ -171,7 +172,7 @@
       position: relative;
       z-index: 4;
       display: grid;
-      grid-template-columns: auto 1fr auto; /* changed: left buttons, center status, right timer */
+      grid-template-columns: auto 1fr auto;
       align-items: center;
       gap: 14px;
       min-height: 58px;
@@ -224,7 +225,6 @@
       z-index: 2;
     }
 
-    /* New layout for draw pile + discards */
     .draw-discard-group {
       display: flex;
       flex-direction: column;
@@ -291,22 +291,20 @@
       min-height: 18px;
     }
 
+    /* Drawn zone – now absolutely positioned next to the current player */
     .drawn-zone {
       position: absolute;
-      left: 50%;
-      bottom: 7%;
-      transform: translateX(-50%);
-      z-index: 4;
-      min-width: min(440px, 92vw);
+      z-index: 20;
       padding: 14px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(17, 17, 24, .92);
+      background: rgba(17, 17, 24, .94);
       box-shadow: var(--shadow);
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 8px;
+      max-width: 200px;
     }
 
     .drawn-actions {
@@ -400,7 +398,7 @@
       .screen { padding: 16px; }
       .game { padding: 10px; overflow: auto; }
       .topbar {
-        grid-template-columns: auto 1fr auto; /* keep left buttons, center status, timer */
+        grid-template-columns: auto 1fr auto;
         align-items: start;
       }
       .status {
@@ -415,9 +413,6 @@
       .center {
         top: 420px;
         width: min(100%, 430px);
-      }
-      .drawn-zone {
-        bottom: 210px;
       }
       .player {
         width: 44vw;
@@ -493,17 +488,18 @@
           </div>
           <div id="discards" class="discard-row"></div>
         </div>
-        <div id="drawnZone" class="drawn-zone" hidden>
-          <div class="pile-label">Drawn card</div>
-          <div id="drawnCard" class="card"></div>
-          <div id="drawnHint" class="muted"></div>
-          <div class="drawn-actions">
-            <button id="keepBtn" class="primary">Keep</button>
-            <button id="discardBtn" class="danger">Discard</button>
-          </div>
-        </div>
       </div>
     </section>
+    <!-- Drawn zone now a direct child of #game, absolutely positioned -->
+    <div id="drawnZone" class="drawn-zone" hidden>
+      <div class="pile-label">Drawn card</div>
+      <div id="drawnCard" class="card"></div>
+      <div id="drawnHint" class="muted"></div>
+      <div class="drawn-actions">
+        <button id="keepBtn" class="primary">Keep</button>
+        <button id="discardBtn" class="danger">Discard</button>
+      </div>
+    </div>
     <div id="ended" class="ended">
       <div class="panel results stack">
         <h2 style="margin:0;font-size:32px;">Game Over</h2>
@@ -796,8 +792,8 @@
       $("drawBtn").hidden = !(myTurn && gs.turnPhase === "action");
       $("drawBtn").disabled = !(myTurn && gs.turnPhase === "action" && Array.isArray(gs.deck) && gs.deck.length > 0);
       renderDiscards(gs, me, myTurn);
-      renderDrawn(gs, me, myTurn);
       renderPlayers(players, currentId);
+      renderDrawn(gs, me, myTurn, currentId);  // pass currentId for positioning
       renderResults(players, gs);
       startTimer();
     }
@@ -832,9 +828,10 @@
       });
     }
 
-    function renderDrawn(gs, me, myTurn) {
+    function renderDrawn(gs, me, myTurn, currentId) {
+      const zone = $("drawnZone");
       const hasDrawn = gs.turnPhase === "deciding" && gs.drawnCard != null;
-      $("drawnZone").hidden = !hasDrawn;
+      zone.hidden = !hasDrawn;
       if (!hasDrawn) {
         state.discardMode = false;
         return;
@@ -848,6 +845,36 @@
       $("discardBtn").hidden = !(myTurn && !state.discardMode);
       $("keepBtn").disabled = !(myTurn && allowed && !state.discardMode);
       $("discardBtn").disabled = !(myTurn && !state.discardMode);
+
+      // Position drawn zone beside the current player's circle element
+      const playerEl = document.querySelector(`.player[data-player-id="${currentId}"]`);
+      const gameEl = $("game");
+      if (playerEl && gameEl) {
+        const gameRect = gameEl.getBoundingClientRect();
+        const playerRect = playerEl.getBoundingClientRect();
+        let left = playerRect.right - gameRect.left + 16; // 16px gap to the right
+        let top = playerRect.top - gameRect.top;
+        // Ensure it stays within game bounds
+        const zoneWidth = zone.offsetWidth || 200;
+        if (left + zoneWidth > gameRect.width) {
+          // position to the left of the player instead
+          left = playerRect.left - gameRect.left - zoneWidth - 16;
+        }
+        if (left < 0) left = 8;
+        if (top < 0) top = 8;
+        if (top + (zone.offsetHeight || 120) > gameRect.height) top = gameRect.height - (zone.offsetHeight || 120) - 8;
+        zone.style.left = left + "px";
+        zone.style.top = top + "px";
+        zone.style.right = "auto";
+        zone.style.bottom = "auto";
+      } else {
+        // fallback to center bottom
+        zone.style.left = "50%";
+        zone.style.top = "auto";
+        zone.style.bottom = "2%";
+        zone.style.transform = "translateX(-50%)";
+        zone.style.right = "auto";
+      }
     }
 
     function renderPlayers(players, currentId) {
@@ -1039,7 +1066,6 @@
     }
 
     async function keepDrawn() {
-      $("drawnZone").hidden = true;
       await transactRoom((room) => {
         const gs = room.gameState;
         if (!isMyAction(room, "deciding") || gs.drawnCard == null) return room;
@@ -1052,7 +1078,6 @@
     }
 
     async function discardDrawn(index) {
-      $("drawnZone").hidden = true;
       await transactRoom((room) => {
         const gs = room.gameState;
         if (!isMyAction(room, "deciding") || gs.drawnCard == null) return room;
@@ -1132,7 +1157,7 @@
       state.discardMode = true;
       $("keepBtn").hidden = true;
       $("discardBtn").hidden = true;
-      renderGame();
+      renderGame(); // re-render to show discard pile buttons
     };
     $("copyRoom").onclick = async () => {
       try { await navigator.clipboard.writeText(state.roomCode); } catch (_) {}
@@ -1141,8 +1166,6 @@
       localStorage.clear();
       location.reload();
     };
-
-    // New Leave button during the game
     $("leaveGame").onclick = () => {
       localStorage.clear();
       location.reload();
