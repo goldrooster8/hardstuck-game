@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hardstuck</title>
+  <title>Hardstuck Gauntlet</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -21,25 +21,19 @@
       --warn: #ffd166;
       --shadow: 0 18px 50px rgba(0, 0, 0, .42);
     }
-
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       margin: 0;
       min-height: 100%;
-      background:
-        radial-gradient(circle at 50% 35%, rgba(60, 76, 95, .18), transparent 34rem),
-        linear-gradient(180deg, #0a0a0e 0%, var(--bg) 100%);
+      background: radial-gradient(circle at 50% 35%, rgba(60, 76, 95, .18), transparent 34rem), linear-gradient(180deg, #0a0a0e 0%, var(--bg) 100%);
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      letter-spacing: 0;
     }
-
     button, input {
       font: inherit;
       letter-spacing: 0;
     }
-
     button {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -50,33 +44,27 @@
       cursor: pointer;
       transition: transform .14s ease, border-color .14s ease, background .14s ease, opacity .14s ease;
     }
-
     button:hover:enabled {
       transform: translateY(-1px);
       border-color: #505064;
       background: #252532;
     }
-
     button:disabled {
       cursor: not-allowed;
       opacity: .42;
     }
-
     .primary {
       background: linear-gradient(180deg, #43bd91, #25986f);
       border-color: #64e4b2;
       color: #03110c;
       font-weight: 800;
     }
-
     .danger {
       background: #321922;
       border-color: #734050;
       color: #ffdce2;
     }
-
     .ghost { background: transparent; }
-
     input {
       width: 100%;
       min-height: 44px;
@@ -87,35 +75,28 @@
       background: #0c0c12;
       color: var(--text);
     }
-
     input:focus { border-color: var(--accent); }
-
     .screen {
       display: none;
       min-height: 100vh;
       padding: 24px;
     }
-
     .screen.active { display: block; }
-
     .shell {
       width: min(560px, 100%);
       margin: 8vh auto 0;
     }
-
     .title {
       font-size: clamp(46px, 8vw, 86px);
       line-height: .92;
       margin: 0 0 12px;
       font-weight: 950;
     }
-
     .subtitle {
       color: var(--muted);
       margin: 0 0 28px;
       font-size: 17px;
     }
-
     .panel {
       background: rgba(16, 16, 21, .94);
       border: 1px solid var(--line);
@@ -123,7 +104,6 @@
       padding: 20px;
       box-shadow: var(--shadow);
     }
-
     .stack { display: grid; gap: 14px; }
     .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .row > * { flex: 1 1 auto; }
@@ -142,7 +122,6 @@
       letter-spacing: .08em;
       background: #0b0b10;
     }
-
     .players-list {
       display: grid;
       gap: 8px;
@@ -150,7 +129,6 @@
       padding: 0;
       list-style: none;
     }
-
     .players-list li {
       display: flex;
       justify-content: space-between;
@@ -160,14 +138,12 @@
       border-radius: 8px;
       background: #111118;
     }
-
     .game {
       min-height: 100vh;
       padding: 16px;
-      position: relative; /* needed for absolute drawn zone */
+      position: relative;
       overflow: hidden;
     }
-
     .topbar {
       position: relative;
       z-index: 4;
@@ -177,24 +153,14 @@
       gap: 14px;
       min-height: 58px;
     }
-
-    .topbar .left-buttons {
-      display: flex;
-      gap: 10px;
-    }
-
+    .topbar .left-buttons { display: flex; gap: 10px; }
     .status {
       justify-self: center;
       text-align: center;
       display: grid;
       gap: 3px;
     }
-
-    .turn {
-      font-size: 22px;
-      font-weight: 850;
-    }
-
+    .turn { font-size: 22px; font-weight: 850; }
     .timer {
       justify-self: end;
       min-width: 74px;
@@ -206,13 +172,11 @@
       font-weight: 900;
       font-variant-numeric: tabular-nums;
     }
-
     .table {
       position: relative;
       height: calc(100vh - 90px);
       min-height: 620px;
     }
-
     .center {
       position: absolute;
       left: 50%;
@@ -224,7 +188,6 @@
       justify-items: center;
       z-index: 2;
     }
-
     .draw-discard-group {
       display: flex;
       flex-direction: column;
@@ -232,14 +195,12 @@
       gap: 18px;
       width: 100%;
     }
-
     .deck-zone {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 8px;
     }
-
     .discard-row {
       display: flex;
       justify-content: center;
@@ -247,14 +208,12 @@
       flex-wrap: wrap;
       align-items: flex-start;
     }
-
     .discard-zone {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 8px;
     }
-
     .card {
       width: 72px;
       height: 100px;
@@ -269,29 +228,17 @@
       text-shadow: 0 1px 2px rgba(0,0,0,.65);
       user-select: none;
     }
-
     .card.back {
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.08) 25%, transparent 25%) 0 0 / 16px 16px,
-        linear-gradient(315deg, rgba(255,255,255,.06) 25%, transparent 25%) 0 0 / 16px 16px,
-        #20202b;
+      background: linear-gradient(135deg, rgba(255,255,255,.08) 25%, transparent 25%) 0 0 / 16px 16px, linear-gradient(315deg, rgba(255,255,255,.06) 25%, transparent 25%) 0 0 / 16px 16px, #20202b;
       color: #d7d7e6;
     }
-
     .empty-card {
       border: 1px dashed #454557;
       background: rgba(255,255,255,.03);
       color: #707082;
       box-shadow: none;
     }
-
-    .pile-label {
-      color: var(--muted);
-      font-size: 13px;
-      min-height: 18px;
-    }
-
-    /* Drawn zone – now absolutely positioned next to the current player */
+    .pile-label { color: var(--muted); font-size: 13px; min-height: 18px; }
     .drawn-zone {
       position: absolute;
       z-index: 20;
@@ -306,14 +253,7 @@
       gap: 8px;
       max-width: 200px;
     }
-
-    .drawn-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
+    .drawn-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
     .player {
       position: absolute;
       width: 230px;
@@ -326,10 +266,8 @@
       box-shadow: 0 10px 28px rgba(0,0,0,.3);
       z-index: 1;
     }
-
     .player.me { border-color: #5fd3aa; }
     .player.active-player { box-shadow: 0 0 0 2px rgba(84, 214, 164, .7), 0 14px 32px rgba(0,0,0,.38); }
-
     .player-head {
       display: flex;
       justify-content: space-between;
@@ -338,20 +276,17 @@
       margin-bottom: 8px;
       min-width: 0;
     }
-
     .player-name {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       font-weight: 850;
     }
-
     .count {
       color: var(--muted);
       font-size: 13px;
       flex: 0 0 auto;
     }
-
     .mini-cards {
       min-height: 34px;
       display: flex;
@@ -359,7 +294,6 @@
       gap: 5px;
       align-items: center;
     }
-
     .mini-card {
       width: 30px;
       height: 38px;
@@ -372,7 +306,6 @@
       border: 1px solid rgba(255,255,255,.24);
       text-shadow: 0 1px 1px rgba(0,0,0,.6);
     }
-
     .fly-card {
       position: fixed;
       z-index: 30;
@@ -380,8 +313,7 @@
       transition: transform .42s cubic-bezier(.2, .86, .28, 1), opacity .42s ease;
       will-change: transform, opacity;
     }
-
-    .ended {
+    .ended, .shop-screen {
       position: fixed;
       inset: 0;
       display: none;
@@ -390,34 +322,25 @@
       background: rgba(0, 0, 0, .72);
       padding: 20px;
     }
-
-    .ended.active { display: grid; }
-    .results { width: min(540px, 100%); }
-
+    .ended.active, .shop-screen.active { display: grid; }
+    .results, .shop-panel { width: min(540px, 100%); }
+    .shop-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .shop-item button { flex-shrink: 0; }
     @media (max-width: 760px) {
       .screen { padding: 16px; }
       .game { padding: 10px; overflow: auto; }
-      .topbar {
-        grid-template-columns: auto 1fr auto;
-        align-items: start;
-      }
-      .status {
-        grid-column: 1 / -1;
-        order: 2;
-      }
+      .topbar { grid-template-columns: auto 1fr auto; align-items: start; }
+      .status { grid-column: 1 / -1; order: 2; }
       .timer { justify-self: end; }
-      .table {
-        height: auto;
-        min-height: 980px;
-      }
-      .center {
-        top: 420px;
-        width: min(100%, 430px);
-      }
-      .player {
-        width: 44vw;
-        max-width: 190px;
-      }
+      .table { height: auto; min-height: 980px; }
+      .center { top: 420px; width: min(100%, 430px); }
+      .player { width: 44vw; max-width: 190px; }
       .card { width: 62px; height: 86px; font-size: 24px; }
       button { padding: 0 12px; }
     }
@@ -426,19 +349,19 @@
 <body>
   <main id="home" class="screen active">
     <section class="shell">
-      <h1 class="title">Hardstuck</h1>
-      <p class="subtitle">Climb only upward. Every low card becomes someone else's temptation.</p>
+      <h1 class="title">Hardstuck Gauntlet</h1>
+      <p class="subtitle">Multi‑round chaos. Buy upgrades. Become unstuck.</p>
       <div class="panel stack">
         <div class="row">
           <button id="showCreate" class="primary">Create Room</button>
           <button id="showJoin">Join Room</button>
         </div>
         <form id="createForm" class="stack" hidden>
-          <input id="createName" maxlength="24" autocomplete="name" placeholder="Username" required>
+          <input id="createName" maxlength="24" placeholder="Username" required>
           <button class="primary" type="submit">Create</button>
         </form>
         <form id="joinForm" class="stack" hidden>
-          <input id="joinName" maxlength="24" autocomplete="name" placeholder="Username" required>
+          <input id="joinName" maxlength="24" placeholder="Username" required>
           <input id="joinCode" maxlength="4" autocapitalize="characters" placeholder="Room code" required>
           <button class="primary" type="submit">Join</button>
         </form>
@@ -446,25 +369,20 @@
       </div>
     </section>
   </main>
-
   <main id="lobby" class="screen">
     <section class="shell">
       <h1 class="title">Room</h1>
       <div class="panel stack">
-        <div>
-          <div class="muted">Share this code</div>
-          <div id="roomCode" class="room-code"></div>
-        </div>
+        <div><div class="muted">Share this code</div><div id="roomCode" class="room-code"></div></div>
         <ul id="lobbyPlayers" class="players-list"></ul>
         <div class="row">
-          <button id="startGame" class="primary" disabled>Start Game</button>
+          <button id="startGame" class="primary" disabled>Start Gauntlet</button>
           <button id="leaveLobby" class="ghost">Leave</button>
         </div>
         <div id="lobbyError" class="error"></div>
       </div>
     </section>
   </main>
-
   <main id="game" class="screen game">
     <header class="topbar">
       <div class="left-buttons">
@@ -490,14 +408,22 @@
         </div>
       </div>
     </section>
-    <!-- Drawn zone now a direct child of #game, absolutely positioned -->
     <div id="drawnZone" class="drawn-zone" hidden>
       <div class="pile-label">Drawn card</div>
       <div id="drawnCard" class="card"></div>
       <div id="drawnHint" class="muted"></div>
-      <div class="drawn-actions">
+      <div class="drawn-actions" id="drawnActions">
         <button id="keepBtn" class="primary">Keep</button>
         <button id="discardBtn" class="danger">Discard</button>
+        <button id="destroyBtn" class="danger" hidden>Destroy</button>
+      </div>
+    </div>
+    <div id="shopScreen" class="shop-screen">
+      <div class="panel shop-panel stack">
+        <h2 style="margin:0">Shop Phase</h2>
+        <div id="shopCoins"></div>
+        <div id="shopItems"></div>
+        <button id="shopReady" class="primary">Ready</button>
       </div>
     </div>
     <div id="ended" class="ended">
@@ -520,22 +446,29 @@
       messagingSenderId: "1006298740610",
       appId: "1:1006298740610:web:5af1dec86271607eb3019b"
     };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
-    const TURN_MS = 30000;
-    const screens = {
-      home: document.getElementById("home"),
-      lobby: document.getElementById("lobby"),
-      game: document.getElementById("game")
-    };
+    const TURN_MS = 30000, TOTAL_ROUNDS = 3;
+    const UPGRADES = [
+      { id: "plus20", name: "Overclock", desc: "+20 to drawn card for 2 turns (once/round)", cost: 3 },
+      { id: "reroll", name: "Reroll", desc: "Reroll drawn card (first free, then -1 coin)", cost: 3 },
+      { id: "riskIt", name: "Risk It", desc: "1/7 chance each draw to risk it all (once/round)", cost: 4 },
+      { id: "destroy", name: "Destroy", desc: "Destroy drawn card instead of discarding (once/round)", cost: 3 },
+      { id: "reverse", name: "Reverse Digits", desc: "Flip digits of a card in your pile (once/round)", cost: 4 },
+      { id: "chaosPile", name: "Chaos Pile", desc: "Destroy 2 random cards, keep 2nd lowest (once/round, need 4 cards)", cost: 3 },
+      { id: "lowStart", name: "Low Start", desc: "First draw always < 40", cost: 2 },
+      { id: "placebo", name: "Placebo", desc: "Does absolutely nothing", cost: 1 },
+      { id: "stealHigh", name: "Highway Robbery", desc: "If top > 80, steal opponent's top after turn (once/round)", cost: 5 },
+      { id: "poison", name: "Poison Gift", desc: "+15 to opponent's top card before your turn (once/round)", cost: 3 }
+    ];
+
     const state = {
       uid: null,
-      playerKey: localStorage.getItem("hardstuckPlayerKey") || null,
-      roomCode: localStorage.getItem("hardstuckRoomCode") || null,
-      isCreator: localStorage.getItem("hardstuckCreator") === "1",
+      playerKey: localStorage.getItem("hsPlayerKey") || null,
+      roomCode: localStorage.getItem("hsRoomCode") || null,
+      isCreator: false,
       room: null,
       serverOffset: 0,
       discardMode: false,
@@ -543,56 +476,43 @@
       roomRef: null,
       previousRoom: null,
       seenDrawnKey: null,
-      seenPileSizes: {},
-      lastDrawnRect: null
+      lastDrawnRect: null,
+      riskUsedThisRound: false,
+      plus20Turns: 0,
+      rerollsUsed: 0,
+      reverseUsed: false,
+      chaosPileUsed: false,
+      destroyUsed: false,
+      stealHighUsed: false,
+      poisonUsed: false,
+      shopReady: false
     };
 
-    const $ = (id) => document.getElementById(id);
+    const $ = id => document.getElementById(id);
 
     function showScreen(name) {
-      Object.entries(screens).forEach(([key, el]) => el.classList.toggle("active", key === name));
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      $(name).classList.add('active');
     }
 
-    function setError(id, message) {
-      $(id).textContent = message || "";
-    }
-
-    function cleanName(name) {
-      return String(name || "").trim().slice(0, 24) || "Player";
-    }
-
-    function cleanCode(code) {
-      return String(code || "").trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
-    }
-
-    function cardColor(value) {
-      const hue = 240 - ((Number(value) - 1) * 90 / 99);
+    function cardColor(v) {
+      const hue = 240 - ((Number(v) - 1) * 90 / 99);
       return `hsl(${hue}, 70%, 60%)`;
     }
 
     function randomCode() {
       const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-      return Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
+      return Array.from({length:4}, () => letters[Math.floor(Math.random()*letters.length)]).join('');
     }
 
-    function shuffle(items) {
-      const copy = items.slice();
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-      }
-      return copy;
-    }
+    function shuffle(arr) { const a = arr.slice(); for (let i = a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
 
     function deckSizeFor(count) {
-      if (count <= 2) return 16;
-      if (count === 3) return 28;
-      if (count === 4) return 40;
-      return 50;
+      if (count <= 2) return 16; if (count === 3) return 28; if (count === 4) return 40; return 50;
     }
 
     function topCard(player) {
-      const pile = Array.isArray(player && player.pile) ? player.pile : [];
+      const pile = Array.isArray(player?.pile) ? player.pile : [];
       return pile.length ? Math.max(...pile) : null;
     }
 
@@ -602,158 +522,115 @@
     }
 
     function validDiscardIndexes(discards) {
-      const piles = normalizeDiscards(discards);
-      const hasEmpty = piles.some((pile) => pile.length === 0);
-      return piles.map((pile, index) => (!hasEmpty || pile.length === 0 ? index : -1)).filter((index) => index >= 0);
+      const piles = (discards || []).map((p,i) => Array.isArray(p) ? p : []);
+      const hasEmpty = piles.some(p => p.length === 0);
+      return piles.map((p,i) => (!hasEmpty || p.length === 0 ? i : -1)).filter(i => i >= 0);
     }
 
-    function canTake(card, player) {
-      if (card == null) return false;
-      const top = topCard(player);
-      return top === null || Number(card) > top;
-    }
-
-    function normalizeDiscards(discards) {
-      return [0, 1, 2].map((index) => Array.isArray(discards && discards[index]) ? discards[index] : []);
-    }
+    function normalizeDiscards(d) { return [0,1,2].map(i => Array.isArray(d?.[i]) ? d[i] : []); }
 
     function playersArray(room) {
-      const players = room && room.players ? room.players : {};
-      const order = Array.isArray(room && room.turnOrder) ? room.turnOrder : Object.keys(players);
-      return order.filter((id) => players[id]).map((id) => ({ id, ...players[id] }));
+      const players = room?.players || {};
+      const order = Array.isArray(room?.turnOrder) ? room.turnOrder : Object.keys(players);
+      return order.filter(id => players[id]).map(id => ({ id, ...players[id] }));
     }
 
-    function currentPlayerId(gameState) {
-      const order = Array.isArray(state.room && state.room.turnOrder) ? state.room.turnOrder : [];
-      return order[Number(gameState && gameState.currentPlayerIndex) || 0] || null;
+    function currentPlayerId(gs) {
+      const order = Array.isArray(state.room?.turnOrder) ? state.room.turnOrder : [];
+      return order[Number(gs?.currentPlayerIndex) || 0] || null;
     }
 
-    function nowServer() {
-      return Date.now() + state.serverOffset;
-    }
+    function nowServer() { return Date.now() + state.serverOffset; }
 
-    function nextTurn(gameState, orderLength) {
-      const nextIndex = (Number(gameState.currentPlayerIndex || 0) + 1) % orderLength;
+    function nextTurn(gs, orderLen) {
       return {
-        currentPlayerIndex: nextIndex,
+        currentPlayerIndex: (Number(gs.currentPlayerIndex||0) + 1) % orderLen,
         turnPhase: "action",
         drawnCard: null,
         turnDeadline: nowServer() + TURN_MS
       };
     }
 
-    function endGamePatch(gameState, room) {
-      const players = room.players || {};
-      const ordered = playersArray(room);
-      const ranked = ordered.slice().sort((a, b) => {
-        const countDiff = (Array.isArray(b.pile) ? b.pile.length : 0) - (Array.isArray(a.pile) ? a.pile.length : 0);
-        if (countDiff) return countDiff;
-        const aTop = topCard(a);
-        const bTop = topCard(b);
-        return (aTop == null ? Infinity : aTop) - (bTop == null ? Infinity : bTop);
+    function endRoundPatch(gs, room) {
+      const players = playersArray(room);
+      const ranked = players.slice().sort((a,b) => (b.pile?.length||0) - (a.pile?.length||0) || (topCard(a)??Infinity) - (topCard(b)??Infinity));
+      const winner = ranked[0]?.id || null;
+      // Award coins: 3 each, +1 for lowest top card
+      const lowestTop = Math.min(...players.map(p => topCard(p) ?? Infinity));
+      const bonusIds = players.filter(p => (topCard(p)??Infinity) === lowestTop).map(p => p.id);
+      const coinUpdates = {};
+      players.forEach(p => {
+        let coins = (p.coins || 0) + 3;
+        if (bonusIds.includes(p.id)) coins += 1;
+        coinUpdates[p.id] = coins;
       });
+      // Store round results
+      const roundResults = gs.roundResults || {};
+      roundResults[gs.round] = players.map(p => ({ id: p.id, cards: p.pile?.length||0, top: topCard(p) }));
       return {
-        phase: "ended",
-        winner: ranked[0] ? ranked[0].id : null,
+        phase: gs.round >= TOTAL_ROUNDS ? "ended" : "shop",
+        winner: gs.round >= TOTAL_ROUNDS ? winner : null,
+        roundResults,
+        coinUpdates,
         turnPhase: "action",
         drawnCard: null,
-        turnDeadline: gameState.turnDeadline || firebase.database.ServerValue.TIMESTAMP
+        turnDeadline: firebase.database.ServerValue.TIMESTAMP
       };
     }
 
-    function advanceOrEndPatch(gameState, room) {
-      if (!Array.isArray(gameState.deck) || gameState.deck.length === 0) {
-        return endGamePatch(gameState, room);
-      }
-      return nextTurn(gameState, (room.turnOrder || []).length);
-    }
-
-    function makeCard(value, className) {
-      const el = document.createElement("div");
-      el.className = className || "card";
-      if (value == null) {
-        el.classList.add("empty-card");
-        el.textContent = "-";
-      } else {
-        el.textContent = value;
-        el.style.background = cardColor(value);
-      }
-      return el;
+    function advanceOrEnd(gs, room) {
+      if (!Array.isArray(gs.deck) || gs.deck.length === 0) return endRoundPatch(gs, room);
+      return nextTurn(gs, (room.turnOrder||[]).length);
     }
 
     async function createRoom(name) {
-      setError("homeError", "");
+      setError("homeError","");
       let code = randomCode();
-      for (let attempt = 0; attempt < 12; attempt++) {
-        const snap = await db.ref(`rooms/${code}`).get();
-        if (!snap.exists()) break;
-        code = randomCode();
-      }
-      const roomRef = db.ref(`rooms/${code}`);
-      const playerRef = roomRef.child("players").push();
-      await roomRef.set({
-        players: {
-          [playerRef.key]: { name: cleanName(name), pile: [] }
-        },
+      for (let i=0;i<12;i++) { if (!(await db.ref(`rooms/${code}`).get()).exists()) break; code = randomCode(); }
+      const ref = db.ref(`rooms/${code}`);
+      const playerRef = ref.child("players").push();
+      await ref.set({
+        players: { [playerRef.key]: { name: name.trim().slice(0,24)||"Player", pile:[], coins:0, upgrades:[] } },
         creator: playerRef.key,
-        gameState: {
-          started: false,
-          deck: [],
-          discards: [[], [], []],
-          currentPlayerIndex: 0,
-          turnPhase: "action",
-          drawnCard: null,
-          turnDeadline: firebase.database.ServerValue.TIMESTAMP,
-          phase: "lobby",
-          winner: null
-        },
-        turnOrder: []
+        gameState: { started:false, deck:[], discards:[[],[],[]], currentPlayerIndex:0, turnPhase:"action", drawnCard:null, turnDeadline:firebase.database.ServerValue.TIMESTAMP, phase:"lobby", round:1, roundResults:{}, shopOpen:false },
+        turnOrder:[]
       });
       enterRoom(code, playerRef.key, true);
     }
 
     async function joinRoom(code, name) {
-      setError("homeError", "");
-      code = cleanCode(code);
-      if (code.length !== 4) throw new Error("Enter a 4-letter room code.");
-      const roomRef = db.ref(`rooms/${code}`);
-      const snap = await roomRef.get();
+      setError("homeError","");
+      code = code.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
+      if (code.length!==4) throw new Error("4-letter code.");
+      const ref = db.ref(`rooms/${code}`);
+      const snap = await ref.get();
       if (!snap.exists()) throw new Error("Room not found.");
-      const room = snap.val();
-      if (room.gameState && room.gameState.started) throw new Error("That game has already started.");
-      const playerRef = roomRef.child("players").push();
-      await playerRef.set({ name: cleanName(name), pile: [] });
+      if (snap.val().gameState?.started) throw new Error("Game already started.");
+      const playerRef = ref.child("players").push();
+      await playerRef.set({ name: name.trim().slice(0,24)||"Player", pile:[], coins:0, upgrades:[] });
       enterRoom(code, playerRef.key, false);
     }
 
-    function enterRoom(code, playerKey, creator) {
-      state.roomCode = code;
-      state.playerKey = playerKey;
-      state.isCreator = !!creator;
-      localStorage.setItem("hardstuckRoomCode", code);
-      localStorage.setItem("hardstuckPlayerKey", playerKey);
-      localStorage.setItem("hardstuckCreator", creator ? "1" : "0");
+    function enterRoom(code, key, creator) {
+      state.roomCode = code; state.playerKey = key; state.isCreator = creator;
+      localStorage.setItem("hsRoomCode", code); localStorage.setItem("hsPlayerKey", key);
       attachRoom();
     }
 
     function attachRoom() {
-      if (!state.roomCode) return;
       if (state.roomRef) state.roomRef.off();
       state.roomRef = db.ref(`rooms/${state.roomCode}`);
-      state.roomRef.on("value", (snap) => {
-        const previousRoom = state.room;
+      state.roomRef.on("value", snap => {
+        const prev = state.room;
         state.room = snap.val();
-        if (!state.room) {
-          localStorage.removeItem("hardstuckRoomCode");
-          localStorage.removeItem("hardstuckPlayerKey");
-          localStorage.removeItem("hardstuckCreator");
-          showScreen("home");
-          return;
-        }
-        if (state.room.gameState && state.room.gameState.started) {
+        if (!state.room) { localStorage.clear(); showScreen("home"); return; }
+        const gs = state.room.gameState;
+        if (gs?.started) {
           showScreen("game");
-          renderGame();
-          detectAnimations(previousRoom, state.room);
+          if (gs.phase === "shop") renderShop();
+          else if (gs.phase === "ended") renderFinalResults();
+          else renderGame();
+          detectAnimations(prev, state.room);
         } else {
           showScreen("lobby");
           renderLobby();
@@ -765,13 +642,8 @@
     function renderLobby() {
       $("roomCode").textContent = state.roomCode;
       const players = playersArray(state.room);
-      $("lobbyPlayers").innerHTML = "";
-      players.forEach((player, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `<span>${index + 1}. ${escapeHtml(player.name)}</span><span>${player.id === state.playerKey ? "you" : ""}</span>`;
-        $("lobbyPlayers").appendChild(li);
-      });
-      const isCreator = state.room && state.room.creator === state.playerKey;
+      $("lobbyPlayers").innerHTML = players.map((p,i) => `<li>${i+1}. ${escapeHtml(p.name)} ${p.id===state.playerKey?'(you)':''}</li>`).join('');
+      const isCreator = state.room?.creator === state.playerKey;
       $("startGame").hidden = !isCreator;
       $("startGame").disabled = !isCreator || players.length < 2;
     }
@@ -780,405 +652,317 @@
       const room = state.room || {};
       const gs = room.gameState || {};
       const players = playersArray(room);
-      const me = room.players && room.players[state.playerKey];
+      const me = room.players?.[state.playerKey];
       const currentId = currentPlayerId(gs);
       const myTurn = currentId === state.playerKey && gs.phase === "playing";
-      const current = currentId && room.players ? room.players[currentId] : null;
-      const phaseText = gs.phase === "ended" ? "Ended" : gs.turnPhase === "deciding" ? "Choose keep or discard" : "Choose draw or take";
-      $("gameRoomCode").textContent = state.roomCode;
-      $("turnText").textContent = gs.phase === "ended" ? "Game over" : `${current ? current.name : "Player"}'s turn`;
-      $("phaseText").textContent = `${phaseText}${myTurn ? " - your move" : ""}`;
-      $("deckCount").textContent = `${Array.isArray(gs.deck) ? gs.deck.length : 0} in deck`;
-      $("drawBtn").hidden = !(myTurn && gs.turnPhase === "action");
-      $("drawBtn").disabled = !(myTurn && gs.turnPhase === "action" && Array.isArray(gs.deck) && gs.deck.length > 0);
+      const current = currentId && room.players?.[currentId];
+      $("gameRoomCode").textContent = `${state.roomCode} (R${gs.round}/${TOTAL_ROUNDS})`;
+      $("turnText").textContent = `${current?.name||'Player'}'s turn`;
+      $("phaseText").textContent = gs.turnPhase === "deciding" ? "Choose keep/discard" : (myTurn ? "Your move" : "");
+      $("deckCount").textContent = `${gs.deck?.length||0} in deck`;
+      $("drawBtn").hidden = !(myTurn && gs.turnPhase==="action");
+      $("drawBtn").disabled = !(myTurn && gs.turnPhase==="action" && gs.deck?.length>0);
       renderDiscards(gs, me, myTurn);
       renderPlayers(players, currentId);
-      renderDrawn(gs, me, myTurn, currentId);  // pass currentId for positioning
-      renderResults(players, gs);
+      renderDrawn(gs, me, myTurn, currentId);
       startTimer();
     }
 
     function renderDiscards(gs, me, myTurn) {
-      const wrap = $("discards");
-      wrap.innerHTML = "";
-      normalizeDiscards(gs.discards).forEach((pile, index) => {
-        const top = pile.length ? pile[pile.length - 1] : null;
-        const zone = document.createElement("div");
-        zone.className = "discard-zone";
-        zone.dataset.discardIndex = index;
+      const wrap = $("discards"); wrap.innerHTML = "";
+      normalizeDiscards(gs.discards).forEach((pile, i) => {
+        const top = pile.length ? pile[pile.length-1] : null;
+        const zone = document.createElement("div"); zone.className = "discard-zone";
+        zone.dataset.discardIndex = i;
         zone.appendChild(makeCard(top, "card"));
         const btn = document.createElement("button");
         if (state.discardMode) {
           btn.textContent = "Discard here";
-          btn.hidden = !(myTurn && gs.turnPhase === "deciding");
-          btn.disabled = !(myTurn && gs.turnPhase === "deciding" && validDiscardIndexes(gs.discards).includes(index));
-          btn.onclick = () => discardDrawn(index);
+          btn.hidden = !(myTurn && gs.turnPhase==="deciding");
+          btn.disabled = !(myTurn && gs.turnPhase==="deciding" && validDiscardIndexes(gs.discards).includes(i));
+          btn.onclick = () => discardDrawn(i);
         } else {
           btn.textContent = "Take";
-          btn.hidden = !(myTurn && gs.turnPhase === "action" && canTake(top, me));
-          btn.disabled = !(myTurn && gs.turnPhase === "action" && canTake(top, me));
-          btn.onclick = () => takeDiscard(index);
+          const can = myTurn && gs.turnPhase==="action" && canTake(top, me);
+          btn.hidden = !can; btn.disabled = !can;
+          btn.onclick = () => takeDiscard(i);
         }
         zone.appendChild(btn);
-        const label = document.createElement("div");
-        label.className = "pile-label";
-        label.textContent = `Discard ${index + 1}`;
-        zone.appendChild(label);
+        zone.appendChild(Object.assign(document.createElement("div"),{className:"pile-label",textContent:`Discard ${i+1}`}));
         wrap.appendChild(zone);
+      });
+    }
+
+    function renderPlayers(players, currentId) {
+      const ring = $("playersRing"); ring.innerHTML = "";
+      const mobile = matchMedia("(max-width:760px)").matches;
+      const rx = mobile ? 37 : 43, ry = mobile ? 40 : 39;
+      const meIdx = players.findIndex(p => p.id === state.playerKey);
+      const visual = players.slice(meIdx).concat(players.slice(0, meIdx));
+      visual.forEach((p, i) => {
+        const angle = 90 + (360 * i / visual.length);
+        const x = 50 + rx * Math.cos(angle * Math.PI/180);
+        const y = 50 + ry * Math.sin(angle * Math.PI/180);
+        const el = document.createElement("article");
+        el.className = `player${p.id===state.playerKey?' me':''}${p.id===currentId?' active-player':''}`;
+        el.dataset.playerId = p.id;
+        el.style.left = `${x}%`; el.style.top = `${y}%`;
+        const pile = (p.pile||[]).slice().sort((a,b)=>a-b);
+        el.innerHTML = `<div class="player-head"><div class="player-name">${escapeHtml(p.name)}</div><div class="count">${pile.length} cards${topCard(p)!=null?` - top ${topCard(p)}`:''}</div></div><div class="mini-cards"></div>`;
+        const minis = el.querySelector(".mini-cards");
+        pile.forEach(v => minis.appendChild(makeMiniCard(v)));
+        ring.appendChild(el);
       });
     }
 
     function renderDrawn(gs, me, myTurn, currentId) {
       const zone = $("drawnZone");
-      const hasDrawn = gs.turnPhase === "deciding" && gs.drawnCard != null;
-      zone.hidden = !hasDrawn;
-      if (!hasDrawn) {
-        state.discardMode = false;
-        return;
-      }
-      $("drawnCard").replaceWith(makeCard(gs.drawnCard, "card"));
-      document.querySelector("#drawnZone .card").id = "drawnCard";
+      const has = gs.turnPhase==="deciding" && gs.drawnCard!=null;
+      zone.hidden = !has;
+      if (!has) { state.discardMode = false; return; }
+      $("drawnCard").replaceWith(makeCard(gs.drawnCard, "card")); document.querySelector("#drawnZone .card").id = "drawnCard";
       state.lastDrawnRect = $("drawnCard").getBoundingClientRect();
       const allowed = canKeep(gs.drawnCard, me);
-      $("drawnHint").textContent = allowed ? "You may keep it or discard it." : "Lower than your top card. You must discard it.";
+      $("drawnHint").textContent = allowed ? "Keep or discard" : "Must discard";
       $("keepBtn").hidden = !(myTurn && !state.discardMode);
       $("discardBtn").hidden = !(myTurn && !state.discardMode);
       $("keepBtn").disabled = !(myTurn && allowed && !state.discardMode);
       $("discardBtn").disabled = !(myTurn && !state.discardMode);
-
-      // Position drawn zone beside the current player's circle element
+      $("destroyBtn").hidden = !(myTurn && me?.upgrades?.includes("destroy") && !state.destroyUsed);
+      $("destroyBtn").disabled = !(myTurn && !state.discardMode);
       const playerEl = document.querySelector(`.player[data-player-id="${currentId}"]`);
       const gameEl = $("game");
       if (playerEl && gameEl) {
-        const gameRect = gameEl.getBoundingClientRect();
-        const playerRect = playerEl.getBoundingClientRect();
-        let left = playerRect.right - gameRect.left + 16; // 16px gap to the right
-        let top = playerRect.top - gameRect.top;
-        // Ensure it stays within game bounds
-        const zoneWidth = zone.offsetWidth || 200;
-        if (left + zoneWidth > gameRect.width) {
-          // position to the left of the player instead
-          left = playerRect.left - gameRect.left - zoneWidth - 16;
-        }
-        if (left < 0) left = 8;
-        if (top < 0) top = 8;
-        if (top + (zone.offsetHeight || 120) > gameRect.height) top = gameRect.height - (zone.offsetHeight || 120) - 8;
-        zone.style.left = left + "px";
-        zone.style.top = top + "px";
-        zone.style.right = "auto";
-        zone.style.bottom = "auto";
-      } else {
-        // fallback to center bottom
-        zone.style.left = "50%";
-        zone.style.top = "auto";
-        zone.style.bottom = "2%";
-        zone.style.transform = "translateX(-50%)";
-        zone.style.right = "auto";
+        const gr = gameEl.getBoundingClientRect(), pr = playerEl.getBoundingClientRect();
+        let left = pr.right - gr.left + 16, top = pr.top - gr.top;
+        if (left + (zone.offsetWidth||200) > gr.width) left = pr.left - gr.left - (zone.offsetWidth||200) - 16;
+        left = Math.max(8, left); top = Math.max(8, Math.min(top, gr.height - (zone.offsetHeight||120) - 8));
+        zone.style.cssText = `left:${left}px;top:${top}px;right:auto;bottom:auto;transform:none;`;
       }
     }
 
-    function renderPlayers(players, currentId) {
-      const ring = $("playersRing");
-      ring.innerHTML = "";
-      const mobile = window.matchMedia("(max-width: 760px)").matches;
-      const radiusX = mobile ? 37 : 43;
-      const radiusY = mobile ? 40 : 39;
-      const meIndex = Math.max(0, players.findIndex((player) => player.id === state.playerKey));
-      const visualPlayers = players.slice(meIndex).concat(players.slice(0, meIndex));
-      visualPlayers.forEach((player, index) => {
-        const angle = 90 + (360 * index / Math.max(visualPlayers.length, 1));
-        const x = 50 + radiusX * Math.cos(angle * Math.PI / 180);
-        const y = 50 + radiusY * Math.sin(angle * Math.PI / 180);
-        const el = document.createElement("article");
-        el.className = `player${player.id === state.playerKey ? " me" : ""}${player.id === currentId ? " active-player" : ""}`;
-        el.dataset.playerId = player.id;
-        el.style.left = `${x}%`;
-        el.style.top = `${y}%`;
-        const pile = Array.isArray(player.pile) ? player.pile.slice().sort((a, b) => a - b) : [];
-        el.innerHTML = `
-          <div class="player-head">
-            <div class="player-name">${escapeHtml(player.name)}</div>
-            <div class="count">${pile.length} cards${topCard(player) == null ? "" : ` - top ${topCard(player)}`}</div>
-          </div>
-          <div class="mini-cards"></div>
-        `;
-        const minis = el.querySelector(".mini-cards");
-        pile.forEach((card) => minis.appendChild(makeMiniCard(card)));
-        ring.appendChild(el);
+    function renderShop() {
+      const room = state.room, gs = room.gameState, me = room.players?.[state.playerKey];
+      $("shopScreen").classList.add("active");
+      $("shopCoins").textContent = `Your coins: ${me?.coins||0}`;
+      const itemsDiv = $("shopItems"); itemsDiv.innerHTML = "";
+      const shopUpgrades = gs.shopUpgrades || UPGRADES.slice(0,6); // host sets random 6 each shop
+      shopUpgrades.forEach(u => {
+        const div = document.createElement("div"); div.className = "shop-item";
+        div.innerHTML = `<div><strong>${u.name}</strong><br><span class="muted">${u.desc}</span></div><div>${u.cost} coins</div>`;
+        const btn = document.createElement("button");
+        btn.textContent = me?.upgrades?.includes(u.id) ? "Owned" : "Buy";
+        btn.disabled = me?.upgrades?.includes(u.id) || (me?.coins||0) < u.cost || state.shopReady;
+        btn.onclick = async () => { await buyUpgrade(u.id); };
+        div.appendChild(btn);
+        itemsDiv.appendChild(div);
+      });
+      $("shopReady").onclick = async () => {
+        await db.ref(`rooms/${state.roomCode}/players/${state.playerKey}/shopReady`).set(true);
+        state.shopReady = true;
+        checkAllShopReady();
+      };
+    }
+
+    async function buyUpgrade(upgradeId) {
+      const me = state.room.players[state.playerKey];
+      const upgrade = UPGRADES.find(u => u.id === upgradeId);
+      if (!upgrade || (me.coins||0) < upgrade.cost || me.upgrades?.includes(upgradeId)) return;
+      await db.ref(`rooms/${state.roomCode}/players/${state.playerKey}`).update({
+        coins: (me.coins||0) - upgrade.cost,
+        upgrades: (me.upgrades||[]).concat([upgradeId])
       });
     }
 
-    function makeMiniCard(value) {
-      const el = document.createElement("div");
-      el.className = "mini-card";
-      el.textContent = value;
-      el.style.background = cardColor(value);
-      return el;
-    }
-
-    function detectAnimations(previousRoom, room) {
-      if (!previousRoom || !room || !room.gameState || room.gameState.phase !== "playing") return;
-      const prevGs = previousRoom.gameState || {};
-      const gs = room.gameState || {};
-      const currentId = currentPlayerId(gs);
-      const drawnKey = `${currentId || ""}:${gs.drawnCard || ""}:${Array.isArray(gs.deck) ? gs.deck.length : 0}`;
-      if (gs.turnPhase === "deciding" && gs.drawnCard != null && state.seenDrawnKey !== drawnKey) {
-        state.seenDrawnKey = drawnKey;
-        setTimeout(() => flyCard(gs.drawnCard, $("deckCard"), $("drawnCard")), 40);
+    function checkAllShopReady() {
+      const allReady = playersArray(state.room).every(p => p.shopReady);
+      if (allReady && state.isCreator) {
+        db.ref(`rooms/${state.roomCode}/gameState`).update({
+          shopOpen: false, phase: "playing", round: (state.room.gameState.round||1)+1,
+          deck: shuffle(Array.from({length:100},(_,i)=>i+1)).slice(0, deckSizeFor(playersArray(state.room).length)),
+          discards: [[],[],[]], currentPlayerIndex: 0, turnPhase: "action", drawnCard: null,
+          turnDeadline: nowServer() + TURN_MS
+        });
       }
-      if (gs.turnPhase !== "deciding") state.seenDrawnKey = null;
-
-      const prevPlayers = previousRoom.players || {};
-      const currPlayers = room.players || {};
-      Object.keys(currPlayers).forEach((playerId) => {
-        const prevPile = Array.isArray(prevPlayers[playerId] && prevPlayers[playerId].pile) ? prevPlayers[playerId].pile : [];
-        const currPile = Array.isArray(currPlayers[playerId].pile) ? currPlayers[playerId].pile : [];
-        if (currPile.length <= prevPile.length) return;
-        const added = currPile[currPile.length - 1];
-        const source = sourceForAddedCard(added, prevGs, gs);
-        const target = document.querySelector(`.player[data-player-id="${cssEscape(playerId)}"] .mini-cards`);
-        if (source && target) setTimeout(() => flyCard(added, source, target), 40);
-      });
     }
 
-    function sourceForAddedCard(card, prevGs, gs) {
-      if (prevGs && prevGs.drawnCard === card) return state.lastDrawnRect || $("drawnCard");
-      const prevDiscards = normalizeDiscards(prevGs && prevGs.discards);
-      const currDiscards = normalizeDiscards(gs && gs.discards);
-      for (let i = 0; i < 3; i++) {
-        const prevTop = prevDiscards[i][prevDiscards[i].length - 1];
-        if (prevTop === card && currDiscards[i].length === prevDiscards[i].length - 1) {
-          const zone = document.querySelector(`.discard-zone[data-discard-index="${i}"]`);
-          return zone && zone.querySelector(".card");
-        }
-      }
-      return $("deckCard");
-    }
-
-    function flyCard(value, sourceEl, targetEl) {
-      if (!sourceEl || !targetEl) return;
-      const sourceRect = typeof sourceEl.getBoundingClientRect === "function" ? sourceEl.getBoundingClientRect() : sourceEl;
-      const targetRect = targetEl.getBoundingClientRect();
-      if (!sourceRect.width || !sourceRect.height || !targetRect.width || !targetRect.height) return;
-      const card = makeCard(value, "card fly-card");
-      card.style.left = `${sourceRect.left}px`;
-      card.style.top = `${sourceRect.top}px`;
-      card.style.width = `${sourceRect.width}px`;
-      card.style.height = `${sourceRect.height}px`;
-      document.body.appendChild(card);
-      const dx = targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
-      const dy = targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
-      requestAnimationFrame(() => {
-        card.style.transform = `translate(${dx}px, ${dy}px) scale(.45)`;
-        card.style.opacity = "0";
-      });
-      setTimeout(() => card.remove(), 480);
-    }
-
-    function cssEscape(value) {
-      if (window.CSS && CSS.escape) return CSS.escape(value);
-      return String(value).replace(/["\\]/g, "\\$&");
-    }
-
-    function renderResults(players, gs) {
-      const active = gs.phase === "ended";
-      $("ended").classList.toggle("active", active);
-      if (!active) return;
-      const ranked = players.slice().sort((a, b) => {
-        const countDiff = (Array.isArray(b.pile) ? b.pile.length : 0) - (Array.isArray(a.pile) ? a.pile.length : 0);
-        if (countDiff) return countDiff;
-        return (topCard(a) == null ? Infinity : topCard(a)) - (topCard(b) == null ? Infinity : topCard(b));
-      });
-      const winner = ranked[0];
-      $("winnerText").textContent = winner ? `${winner.name} wins with ${winner.pile.length} cards.` : "No winner.";
-      $("resultsList").innerHTML = "";
-      ranked.forEach((player, index) => {
-        const li = document.createElement("li");
-        const pile = Array.isArray(player.pile) ? player.pile : [];
-        li.innerHTML = `<span>${index + 1}. ${escapeHtml(player.name)}</span><span>${pile.length} cards, top ${topCard(player) || "-"}</span>`;
-        $("resultsList").appendChild(li);
-      });
+    function renderFinalResults() {
+      $("ended").classList.add("active");
+      const results = state.room.gameState.roundResults || {};
+      const totals = {};
+      Object.values(results).flat().forEach(r => { totals[r.id] = (totals[r.id]||0) + r.cards; });
+      const players = playersArray(state.room);
+      const ranked = players.sort((a,b) => (totals[b.id]||0) - (totals[a.id]||0));
+      $("winnerText").textContent = `${ranked[0]?.name} wins the Gauntlet!`;
+      $("resultsList").innerHTML = ranked.map((p,i) => `<li>${i+1}. ${escapeHtml(p.name)} – ${totals[p.id]||0} total cards</li>`).join('');
     }
 
     function startTimer() {
       clearInterval(state.timerId);
       const tick = () => {
-        const gs = state.room && state.room.gameState;
-        if (!gs || gs.phase !== "playing") {
-          $("timer").textContent = "--";
-          return;
-        }
-        const deadline = Number(gs.turnDeadline);
-        if (!Number.isFinite(deadline) || deadline <= 0) {
-          $("timer").textContent = "30s";
-          return;
-        }
-        const left = Math.max(0, Math.ceil((deadline - nowServer()) / 1000));
+        const gs = state.room?.gameState;
+        if (!gs || gs.phase !== "playing") { $("timer").textContent = "--"; return; }
+        const left = Math.max(0, Math.ceil(((Number(gs.turnDeadline)||0) - nowServer())/1000));
         $("timer").textContent = `${left}s`;
         if (left <= 0) timeoutTurn();
       };
-      tick();
-      state.timerId = setInterval(tick, 250);
+      tick(); state.timerId = setInterval(tick, 250);
     }
 
     async function startGame() {
-      const room = state.room;
-      const players = playersArray(room);
-      if (!room || room.creator !== state.playerKey || players.length < 2) return;
-      const count = deckSizeFor(players.length);
-      const deck = shuffle(Array.from({ length: 100 }, (_, i) => i + 1)).slice(0, count);
+      const room = state.room, players = playersArray(room);
+      if (room.creator !== state.playerKey || players.length < 2) return;
+      const deck = shuffle(Array.from({length:100},(_,i)=>i+1)).slice(0, deckSizeFor(players.length));
+      const turnOrder = shuffle(players.map(p => p.id));
+      // Reset per-round flags
+      state.riskUsedThisRound = state.plus20Turns = state.rerollsUsed = 0;
+      state.reverseUsed = state.chaosPileUsed = state.destroyUsed = state.stealHighUsed = state.poisonUsed = false;
       await db.ref(`rooms/${state.roomCode}`).update({
-        turnOrder: players.map((p) => p.id),
-        "gameState/started": true,
-        "gameState/phase": "playing",
-        "gameState/deck": deck,
-        "gameState/discards": [[], [], []],
-        "gameState/currentPlayerIndex": 0,
-        "gameState/turnPhase": "action",
-        "gameState/drawnCard": null,
-        "gameState/winner": null,
-        "gameState/turnDeadline": nowServer() + TURN_MS
+        turnOrder,
+        "gameState/started": true, "gameState/phase": "playing", "gameState/round": 1,
+        "gameState/deck": deck, "gameState/discards": [[],[],[]], "gameState/currentPlayerIndex": 0,
+        "gameState/turnPhase": "action", "gameState/drawnCard": null, "gameState/winner": null,
+        "gameState/turnDeadline": nowServer() + TURN_MS,
+        "gameState/shopUpgrades": shuffle(UPGRADES).slice(0,6)
       });
-    }
-
-    async function transactRoom(mutator) {
-      await db.ref(`rooms/${state.roomCode}`).transaction((room) => {
-        if (!room || !room.gameState || room.gameState.phase !== "playing") return room;
-        return mutator(room) || room;
-      });
-    }
-
-    function isMyAction(room, phase) {
-      const gs = room.gameState;
-      const order = Array.isArray(room.turnOrder) ? room.turnOrder : [];
-      return order[Number(gs.currentPlayerIndex) || 0] === state.playerKey && gs.turnPhase === phase;
     }
 
     async function drawCard() {
-      await transactRoom((room) => {
-        const gs = room.gameState;
-        if (!isMyAction(room, "action") || !Array.isArray(gs.deck) || gs.deck.length === 0) return room;
-        const deck = gs.deck.slice();
-        const drawn = deck.shift();
-        room.gameState = { ...gs, deck, drawnCard: drawn, turnPhase: "deciding" };
+      await transactRoom(room => {
+        const gs = room.gameState, me = room.players[state.playerKey];
+        if (!isMyAction(room, "action") || !gs.deck?.length) return;
+        const deck = gs.deck.slice(), drawn = deck.shift();
+        // Check Risk It (1/7 once per round)
+        if (me.upgrades?.includes("riskIt") && !state.riskUsedThisRound && Math.random() < 1/7) {
+          state.riskUsedThisRound = true;
+          const riskCards = deck.splice(0,2); // draw two more
+          room.gameState = { ...gs, deck, drawnCard: null, riskCards, turnPhase: "risking" };
+          return room;
+        }
+        // Overclock +20
+        let effectiveCard = drawn;
+        if (me.upgrades?.includes("plus20") && state.plus20Turns < 2) {
+          effectiveCard = Math.min(100, drawn + 20);
+          state.plus20Turns++;
+        }
+        room.gameState = { ...gs, deck, drawnCard: effectiveCard, turnPhase: "deciding" };
         return room;
       });
     }
 
     async function keepDrawn() {
-      await transactRoom((room) => {
+      await transactRoom(room => {
         const gs = room.gameState;
-        if (!isMyAction(room, "deciding") || gs.drawnCard == null) return room;
-        const player = room.players[state.playerKey];
-        if (!canKeep(gs.drawnCard, player)) return room;
-        player.pile = Array.isArray(player.pile) ? player.pile.concat([gs.drawnCard]) : [gs.drawnCard];
-        room.gameState = { ...gs, ...advanceOrEndPatch(gs, room) };
+        if (!isMyAction(room, "deciding") || gs.drawnCard == null) return;
+        const me = room.players[state.playerKey];
+        if (!canKeep(gs.drawnCard, me)) return;
+        me.pile = [...(me.pile||[]), gs.drawnCard];
+        room.gameState = { ...gs, ...advanceOrEnd(gs, room) };
         return room;
       });
     }
 
     async function discardDrawn(index) {
-      await transactRoom((room) => {
+      await transactRoom(room => {
         const gs = room.gameState;
-        if (!isMyAction(room, "deciding") || gs.drawnCard == null) return room;
+        if (!isMyAction(room, "deciding") || gs.drawnCard == null) return;
         const valid = validDiscardIndexes(gs.discards);
-        if (!valid.includes(index)) return room;
+        if (!valid.includes(index)) return;
         const discards = normalizeDiscards(gs.discards);
-        discards[index] = discards[index].concat([gs.drawnCard]);
-        room.gameState = { ...gs, discards, ...advanceOrEndPatch(gs, room) };
+        discards[index] = [...discards[index], gs.drawnCard];
+        room.gameState = { ...gs, discards, ...advanceOrEnd(gs, room) };
         return room;
       });
       state.discardMode = false;
     }
 
+    async function destroyDrawn() {
+      await transactRoom(room => {
+        if (!isMyAction(room, "deciding") || !room.players[state.playerKey]?.upgrades?.includes("destroy") || state.destroyUsed) return;
+        state.destroyUsed = true;
+        room.gameState = { ...room.gameState, ...advanceOrEnd(room.gameState, room) };
+        return room;
+      });
+    }
+
     async function takeDiscard(index) {
-      await transactRoom((room) => {
+      await transactRoom(room => {
         const gs = room.gameState;
-        if (!isMyAction(room, "action")) return room;
-        const player = room.players[state.playerKey];
+        if (!isMyAction(room, "action")) return;
+        const me = room.players[state.playerKey];
         const discards = normalizeDiscards(gs.discards);
-        const card = discards[index] && discards[index][discards[index].length - 1];
-        if (!canTake(card, player)) return room;
-        discards[index] = discards[index].slice(0, -1);
-        player.pile = Array.isArray(player.pile) ? player.pile.concat([card]) : [card];
-        room.gameState = { ...gs, discards, ...nextTurn(gs, (room.turnOrder || []).length) };
+        const card = discards[index]?.[discards[index].length-1];
+        if (!canTake(card, me)) return;
+        discards[index] = discards[index].slice(0,-1);
+        me.pile = [...(me.pile||[]), card];
+        room.gameState = { ...gs, discards, ...nextTurn(gs, (room.turnOrder||[]).length) };
         return room;
       });
     }
 
     async function timeoutTurn() {
-      await transactRoom((room) => {
+      await transactRoom(room => {
         const gs = room.gameState;
-        const deadline = Number(gs.turnDeadline);
-        if (!Number.isFinite(deadline) || deadline <= 0) return room;
-        if (deadline > nowServer() + 500) return room;
-        if (gs.turnPhase === "deciding" && gs.drawnCard != null) {
-          const index = validDiscardIndexes(gs.discards)[0];
+        if (gs.deadline > nowServer()+500) return;
+        if (gs.turnPhase === "deciding" && gs.drawnCard) {
+          const idx = validDiscardIndexes(gs.discards)[0];
           const discards = normalizeDiscards(gs.discards);
-          discards[index] = discards[index].concat([gs.drawnCard]);
-          room.gameState = { ...gs, discards, ...advanceOrEndPatch(gs, room) };
-        } else {
-          room.gameState = { ...gs, ...nextTurn(gs, (room.turnOrder || []).length) };
-        }
+          discards[idx] = [...discards[idx], gs.drawnCard];
+          room.gameState = { ...gs, discards, ...advanceOrEnd(gs, room) };
+        } else room.gameState = { ...gs, ...nextTurn(gs, (room.turnOrder||[]).length) };
         return room;
       });
     }
 
-    function escapeHtml(value) {
-      return String(value).replace(/[&<>"']/g, (char) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      }[char]));
+    async function transactRoom(mutator) {
+      await db.ref(`rooms/${state.roomCode}`).transaction(room => {
+        if (!room?.gameState || room.gameState.phase !== "playing") return room;
+        return mutator(room) || room;
+      });
     }
 
-    $("showCreate").onclick = () => {
-      $("createForm").hidden = false;
-      $("joinForm").hidden = true;
-    };
-    $("showJoin").onclick = () => {
-      $("joinForm").hidden = false;
-      $("createForm").hidden = true;
-    };
-    $("createForm").onsubmit = async (event) => {
-      event.preventDefault();
-      try { await createRoom($("createName").value); } catch (err) { setError("homeError", err.message); }
-    };
-    $("joinForm").onsubmit = async (event) => {
-      event.preventDefault();
-      try { await joinRoom($("joinCode").value, $("joinName").value); } catch (err) { setError("homeError", err.message); }
-    };
+    function isMyAction(room, phase) {
+      const gs = room.gameState, order = room.turnOrder || [];
+      return order[Number(gs.currentPlayerIndex)||0] === state.playerKey && gs.turnPhase === phase;
+    }
+
+    function canTake(card, player) {
+      if (card == null) return false;
+      const top = topCard(player);
+      return top === null || Number(card) > top;
+    }
+
+    function makeCard(value, cls) {
+      const el = document.createElement("div"); el.className = cls||"card";
+      if (value == null) { el.classList.add("empty-card"); el.textContent = "-"; }
+      else { el.textContent = value; el.style.background = cardColor(value); }
+      return el;
+    }
+    function makeMiniCard(v) { const el = document.createElement("div"); el.className="mini-card"; el.textContent=v; el.style.background=cardColor(v); return el; }
+
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
+    // Event listeners
+    $("showCreate").onclick = () => { $("createForm").hidden=false; $("joinForm").hidden=true; };
+    $("showJoin").onclick = () => { $("joinForm").hidden=false; $("createForm").hidden=true; };
+    $("createForm").onsubmit = async e => { e.preventDefault(); try{await createRoom($("createName").value);}catch(err){setError("homeError",err.message);} };
+    $("joinForm").onsubmit = async e => { e.preventDefault(); try{await joinRoom($("joinCode").value,$("joinName").value);}catch(err){setError("homeError",err.message);} };
     $("startGame").onclick = startGame;
-    $("leaveLobby").onclick = () => {
-      localStorage.clear();
-      location.reload();
-    };
+    $("leaveLobby").onclick = () => { localStorage.clear(); location.reload(); };
     $("drawBtn").onclick = drawCard;
     $("keepBtn").onclick = keepDrawn;
-    $("discardBtn").onclick = () => {
-      state.discardMode = true;
-      $("keepBtn").hidden = true;
-      $("discardBtn").hidden = true;
-      renderGame(); // re-render to show discard pile buttons
-    };
-    $("copyRoom").onclick = async () => {
-      try { await navigator.clipboard.writeText(state.roomCode); } catch (_) {}
-    };
-    $("backHome").onclick = () => {
-      localStorage.clear();
-      location.reload();
-    };
-    $("leaveGame").onclick = () => {
-      localStorage.clear();
-      location.reload();
-    };
+    $("discardBtn").onclick = () => { state.discardMode=true; $("keepBtn").hidden=true; $("discardBtn").hidden=true; renderGame(); };
+    $("destroyBtn").onclick = destroyDrawn;
+    $("copyRoom").onclick = async () => { try{await navigator.clipboard.writeText(state.roomCode);}catch{}};
+    $("backHome").onclick = () => { localStorage.clear(); location.reload(); };
+    $("leaveGame").onclick = () => { localStorage.clear(); location.reload(); };
 
-    auth.signInAnonymously().then((cred) => {
+    auth.signInAnonymously().then(cred => {
       state.uid = cred.user.uid;
-      return db.ref(".info/serverTimeOffset").on("value", (snap) => {
-        state.serverOffset = snap.val() || 0;
-      });
+      db.ref(".info/serverTimeOffset").on("value", snap => { state.serverOffset = snap.val()||0; });
     }).then(() => {
       if (state.roomCode && state.playerKey) attachRoom();
-    }).catch((err) => setError("homeError", err.message));
+    }).catch(err => setError("homeError", err.message));
   </script>
 </body>
 </html>
