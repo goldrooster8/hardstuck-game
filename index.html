@@ -526,14 +526,15 @@
           </div>
           <div id="discards" class="discard-row"></div>
         </div>
-        <div id="drawnZone" class="drawn-zone" hidden>
-          <div class="pile-label">Drawn card</div>
-          <div id="drawnCard" class="card"></div>
-          <div id="drawnHint" class="muted"></div>
-          <div class="drawn-actions">
-            <button id="keepBtn" class="primary">Keep</button>
-            <button id="discardBtn" class="danger">Discard</button>
-          </div>
+      </div>
+      <!-- Drawn card UI moved OUTSIDE of .center to avoid overlap -->
+      <div id="drawnZone" class="drawn-zone" hidden>
+        <div class="pile-label">Drawn card</div>
+        <div id="drawnCard" class="card"></div>
+        <div id="drawnHint" class="muted"></div>
+        <div class="drawn-actions">
+          <button id="keepBtn" class="primary">Keep</button>
+          <button id="discardBtn" class="danger">Discard</button>
         </div>
       </div>
     </section>
@@ -1022,7 +1023,6 @@
         $("winnerText").textContent = `${winnerName} wins this round.`;
       }
 
-      // match score table
       let scoreHtml = '<table class="match-score-table">';
       players.forEach(p => {
         const wins = matchWins[p.id] || 0;
@@ -1031,7 +1031,6 @@
       scoreHtml += `</table><div class="muted">First to ${roundsToWin} wins the match</div>`;
       $("matchScoreTable").innerHTML = scoreHtml;
 
-      // player round ranking
       const ranked = players.slice().sort((a, b) => {
         const countDiff = (Array.isArray(b.pile) ? b.pile.length : 0) - (Array.isArray(a.pile) ? a.pile.length : 0);
         if (countDiff) return countDiff;
@@ -1211,7 +1210,6 @@
         const count = deckSizeFor(allIds.length);
         const deck = shuffle(Array.from({ length: 100 }, (_, i) => i + 1)).slice(0, count);
         const shuffledOrder = shuffle(allIds);
-        // Reset piles for all players
         allIds.forEach(id => {
           if (room.players[id]) room.players[id].pile = [];
         });
