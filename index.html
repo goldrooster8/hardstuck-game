@@ -240,21 +240,6 @@
       z-index: 2;
     }
 
-    .draw-discard-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 18px;
-      width: 100%;
-    }
-
-    .deck-zone {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-
     .discard-row {
       display: flex;
       justify-content: center;
@@ -306,12 +291,18 @@
       min-height: 18px;
     }
 
+    .active-deck-zone {
+      position: absolute;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
     .drawn-zone {
       position: absolute;
-      left: 50%;
-      bottom: 7%;
-      transform: translateX(-50%);
-      z-index: 4;
+      z-index: 5;
       min-width: min(440px, 92vw);
       padding: 14px;
       border: 1px solid var(--line);
@@ -441,9 +432,6 @@
         top: 420px;
         width: min(100%, 430px);
       }
-      .drawn-zone {
-        bottom: 210px;
-      }
       .player {
         width: 44vw;
         max-width: 190px;
@@ -517,17 +505,17 @@
     </header>
     <section id="table" class="table">
       <div id="playersRing"></div>
-      <div class="center">
-        <div class="draw-discard-group">
-          <div class="deck-zone">
-            <div id="deckCard" class="card back">?</div>
-            <button id="drawBtn" class="primary">Draw</button>
-            <div id="deckCount" class="pile-label"></div>
-          </div>
-          <div id="discards" class="discard-row"></div>
-        </div>
+      <!-- Active player's deck (moves around the circle) -->
+      <div id="activeDeckZone" class="active-deck-zone" hidden>
+        <div id="deckCard" class="card back">?</div>
+        <button id="drawBtn" class="primary">Draw</button>
+        <div id="deckCount" class="pile-label"></div>
       </div>
-      <!-- Drawn card UI moved OUTSIDE of .center to avoid overlap -->
+      <!-- Discards stay in the centre -->
+      <div class="center">
+        <div id="discards" class="discard-row"></div>
+      </div>
+      <!-- Drawn card UI (appears next to the active deck) -->
       <div id="drawnZone" class="drawn-zone" hidden>
         <div class="pile-label">Drawn card</div>
         <div id="drawnCard" class="card"></div>
@@ -724,6 +712,49 @@
       return el;
     }
 
+    // --- Helper: get visual position of a player on the ring ---
+    function getPlayerVisualPosition(playerId) {
+      const room = state.room;
+      if (!room || !playerId) return { left: 50, top: 50 }; // fallback centre
+      const players = playersArray(room);
+      const meIndex = Math.max(0, players.findIndex(p => p.id === state.playerKey));
+      const visualPlayers = players.slice(meIndex).concat(players.slice(0, meIndex));
+      const idx = visualPlayers.findIndex(p => p.id === playerId);
+      if (idx < 0) return { left: 50, top: 50 };
+      const mobile = window.matchMedia("(max-width: 760px)").matches;
+      const radiusX = mobile ? 37 : 43;
+      const radiusY = mobile ? 40 : 39;
+      const angle = 90 + (360 * idx / Math.max(visualPlayers.length, 1));
+      const x = 50 + radiusX * Math.cos(angle * Math.PI / 180);
+      const y = 50 + radiusY * Math.sin(angle * Math.PI / 180);
+      return { left: x, top: y };
+    }
+
+    // --- Position the active deck and drawn card UI near the current player ---
+    function positionActiveDeck() {
+      const room = state.room;
+      const gs = room && room.gameState;
+      const activeId = currentPlayerId(gs);
+      const deckZone = $("activeDeckZone");
+      const drawnZone = $("drawnZone");
+      if (!activeId || gs.phase !== "playing") {
+        deckZone.hidden = true;
+        drawnZone.hidden = true;
+        return;
+      }
+      const pos = getPlayerVisualPosition(activeId);
+      // Place deck just below the player card (increase top slightly)
+      deckZone.style.left = pos.left + "%";
+      deckZone.style.top = (pos.top + 6) + "%";   // offset below player
+      deckZone.style.transform = "translate(-50%, -50%)";
+      deckZone.hidden = false;
+
+      // Drawn card UI appears further below the deck
+      drawnZone.style.left = pos.left + "%";
+      drawnZone.style.top = (pos.top + 20) + "%";  // further down
+      drawnZone.style.transform = "translate(-50%, -50%)";
+    }
+
     async function createRoom(name) {
       setError("homeError", "");
       let code = randomCode();
@@ -846,6 +877,7 @@
       renderDrawn(gs, me, myTurn);
       renderPlayers(players, currentId);
       renderResults(players, gs);
+      positionActiveDeck();   // move deck to active player
       startTimer();
     }
 
@@ -895,6 +927,8 @@
       $("discardBtn").hidden = !(myTurn && !state.discardMode);
       $("keepBtn").disabled = !(myTurn && allowed && !state.discardMode);
       $("discardBtn").disabled = !(myTurn && !state.discardMode);
+      // reposition drawn zone near active deck (already done in positionActiveDeck, but ensure it's updated)
+      positionActiveDeck();
     }
 
     function renderPlayers(players, currentId) {
