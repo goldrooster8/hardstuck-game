@@ -35,10 +35,21 @@
       letter-spacing: 0;
     }
 
-    button, input {
+    button, input, select {
       font: inherit;
       letter-spacing: 0;
     }
+
+    select {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      background: #0c0c12;
+      color: var(--text);
+      outline: none;
+    }
+    select:focus { border-color: var(--accent); }
 
     button {
       border: 1px solid var(--line);
@@ -171,7 +182,7 @@
       position: relative;
       z-index: 4;
       display: grid;
-      grid-template-columns: auto 1fr auto; /* changed: left buttons, center status, right timer */
+      grid-template-columns: auto 1fr auto;
       align-items: center;
       gap: 14px;
       min-height: 58px;
@@ -192,6 +203,11 @@
     .turn {
       font-size: 22px;
       font-weight: 850;
+    }
+
+    .match-info {
+      font-size: 14px;
+      color: var(--muted);
     }
 
     .timer {
@@ -224,7 +240,6 @@
       z-index: 2;
     }
 
-    /* New layout for draw pile + discards */
     .draw-discard-group {
       display: flex;
       flex-direction: column;
@@ -396,11 +411,21 @@
     .ended.active { display: grid; }
     .results { width: min(540px, 100%); }
 
+    .match-score-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+    }
+    .match-score-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
     @media (max-width: 760px) {
       .screen { padding: 16px; }
       .game { padding: 10px; overflow: auto; }
       .topbar {
-        grid-template-columns: auto 1fr auto; /* keep left buttons, center status, timer */
+        grid-template-columns: auto 1fr auto;
         align-items: start;
       }
       .status {
@@ -461,6 +486,13 @@
           <div id="roomCode" class="room-code"></div>
         </div>
         <ul id="lobbyPlayers" class="players-list"></ul>
+        <div class="row" id="lobbySettings">
+          <label class="muted" for="roundsSelect">Rounds to win:</label>
+          <select id="roundsSelect">
+            <option value="3">Best of 3</option>
+            <option value="5">Best of 5</option>
+          </select>
+        </div>
         <div class="row">
           <button id="startGame" class="primary" disabled>Start Game</button>
           <button id="leaveLobby" class="ghost">Leave</button>
@@ -479,6 +511,7 @@
       <div class="status">
         <div id="turnText" class="turn">Waiting</div>
         <div id="phaseText" class="muted"></div>
+        <div id="matchInfo" class="match-info"></div>
       </div>
       <div id="timer" class="timer">30s</div>
     </header>
@@ -506,10 +539,15 @@
     </section>
     <div id="ended" class="ended">
       <div class="panel results stack">
-        <h2 style="margin:0;font-size:32px;">Game Over</h2>
+        <h2 id="endTitle" style="margin:0;font-size:32px;">Game Over</h2>
         <div id="winnerText"></div>
+        <div id="matchScoreTable"></div>
         <ul id="resultsList" class="players-list"></ul>
-        <button id="backHome" class="primary">Back to Start</button>
+        <div class="row" id="endButtons">
+          <button id="nextRoundBtn" class="primary" style="display:none;">Next Round</button>
+          <button id="newMatchBtn" class="primary" style="display:none;">New Match</button>
+          <button id="backHome" class="primary">Back to Start</button>
+        </div>
       </div>
     </div>
   </main>
@@ -646,7 +684,7 @@
       };
     }
 
-    function endGamePatch(gameState, room) {
+    function endRoundPatch(gameState, room) {
       const players = room.players || {};
       const ordered = playersArray(room);
       const ranked = ordered.slice().sort((a, b) => {
@@ -657,7 +695,7 @@
         return (aTop == null ? Infinity : aTop) - (bTop == null ? Infinity : bTop);
       });
       return {
-        phase: "ended",
+        phase: "roundEnd",
         winner: ranked[0] ? ranked[0].id : null,
         turnPhase: "action",
         drawnCard: null,
@@ -667,7 +705,7 @@
 
     function advanceOrEndPatch(gameState, room) {
       if (!Array.isArray(gameState.deck) || gameState.deck.length === 0) {
-        return endGamePatch(gameState, room);
+        return endRoundPatch(gameState, room);
       }
       return nextTurn(gameState, (room.turnOrder || []).length);
     }
@@ -700,6 +738,7 @@
           [playerRef.key]: { name: cleanName(name), pile: [] }
         },
         creator: playerRef.key,
+        roundsToWin: 3,
         gameState: {
           started: false,
           deck: [],
@@ -709,7 +748,9 @@
           drawnCard: null,
           turnDeadline: firebase.database.ServerValue.TIMESTAMP,
           phase: "lobby",
-          winner: null
+          winner: null,
+          matchWins: {},
+          roundNumber: 1
         },
         turnOrder: []
       });
@@ -778,6 +819,10 @@
       const isCreator = state.room && state.room.creator === state.playerKey;
       $("startGame").hidden = !isCreator;
       $("startGame").disabled = !isCreator || players.length < 2;
+      $("lobbySettings").hidden = !isCreator;
+      if (state.room) {
+        $("roundsSelect").value = String(state.room.roundsToWin || 3);
+      }
     }
 
     function renderGame() {
@@ -788,13 +833,14 @@
       const currentId = currentPlayerId(gs);
       const myTurn = currentId === state.playerKey && gs.phase === "playing";
       const current = currentId && room.players ? room.players[currentId] : null;
-      const phaseText = gs.phase === "ended" ? "Ended" : gs.turnPhase === "deciding" ? "Choose keep or discard" : "Choose draw or take";
+      const phaseText = gs.phase === "playing" ? (gs.turnPhase === "deciding" ? "Choose keep or discard" : "Choose draw or take") : "";
       $("gameRoomCode").textContent = state.roomCode;
-      $("turnText").textContent = gs.phase === "ended" ? "Game over" : `${current ? current.name : "Player"}'s turn`;
+      $("turnText").textContent = gs.phase === "playing" ? `${current ? current.name : "Player"}'s turn` : (gs.phase === "roundEnd" || gs.phase === "matchEnd" ? "Game Over" : "Waiting");
       $("phaseText").textContent = `${phaseText}${myTurn ? " - your move" : ""}`;
       $("deckCount").textContent = `${Array.isArray(gs.deck) ? gs.deck.length : 0} in deck`;
       $("drawBtn").hidden = !(myTurn && gs.turnPhase === "action");
       $("drawBtn").disabled = !(myTurn && gs.turnPhase === "action" && Array.isArray(gs.deck) && gs.deck.length > 0);
+      $("matchInfo").textContent = `Round ${gs.roundNumber || 1} – Best of ${room.roundsToWin || 3}`;
       renderDiscards(gs, me, myTurn);
       renderDrawn(gs, me, myTurn);
       renderPlayers(players, currentId);
@@ -954,16 +1000,43 @@
     }
 
     function renderResults(players, gs) {
-      const active = gs.phase === "ended";
+      const phase = gs.phase;
+      const active = phase === "roundEnd" || phase === "matchEnd";
       $("ended").classList.toggle("active", active);
       if (!active) return;
+
+      $("endTitle").textContent = phase === "matchEnd" ? "Match Over" : "Round Over";
+      const roundWinnerId = gs.winner;
+      const matchWins = gs.matchWins || {};
+      const roundsToWin = state.room.roundsToWin || 3;
+
+      let winnerName = "";
+      if (phase === "matchEnd") {
+        const matchWinnerId = gs.matchWinner || roundWinnerId;
+        const matchWinner = players.find(p => p.id === matchWinnerId);
+        winnerName = matchWinner ? matchWinner.name : "Someone";
+        $("winnerText").textContent = `${winnerName} wins the match!`;
+      } else {
+        const roundWinner = players.find(p => p.id === roundWinnerId);
+        winnerName = roundWinner ? roundWinner.name : "Nobody";
+        $("winnerText").textContent = `${winnerName} wins this round.`;
+      }
+
+      // match score table
+      let scoreHtml = '<table class="match-score-table">';
+      players.forEach(p => {
+        const wins = matchWins[p.id] || 0;
+        scoreHtml += `<tr><td>${escapeHtml(p.name)}</td><td style="text-align:right;">${wins} win${wins !== 1 ? 's' : ''}</td></tr>`;
+      });
+      scoreHtml += `</table><div class="muted">First to ${roundsToWin} wins the match</div>`;
+      $("matchScoreTable").innerHTML = scoreHtml;
+
+      // player round ranking
       const ranked = players.slice().sort((a, b) => {
         const countDiff = (Array.isArray(b.pile) ? b.pile.length : 0) - (Array.isArray(a.pile) ? a.pile.length : 0);
         if (countDiff) return countDiff;
         return (topCard(a) == null ? Infinity : topCard(a)) - (topCard(b) == null ? Infinity : topCard(b));
       });
-      const winner = ranked[0];
-      $("winnerText").textContent = winner ? `${winner.name} wins with ${winner.pile.length} cards.` : "No winner.";
       $("resultsList").innerHTML = "";
       ranked.forEach((player, index) => {
         const li = document.createElement("li");
@@ -971,6 +1044,11 @@
         li.innerHTML = `<span>${index + 1}. ${escapeHtml(player.name)}</span><span>${pile.length} cards, top ${topCard(player) || "-"}</span>`;
         $("resultsList").appendChild(li);
       });
+
+      const isCreator = state.room && state.room.creator === state.playerKey;
+      $("nextRoundBtn").style.display = (phase === "roundEnd" && isCreator) ? "" : "none";
+      $("newMatchBtn").style.display = (phase === "matchEnd" && isCreator) ? "" : "none";
+      $("backHome").style.display = "";
     }
 
     function startTimer() {
@@ -1000,8 +1078,13 @@
       if (!room || room.creator !== state.playerKey || players.length < 2) return;
       const count = deckSizeFor(players.length);
       const deck = shuffle(Array.from({ length: 100 }, (_, i) => i + 1)).slice(0, count);
+      const shuffledOrder = shuffle(players.map(p => p.id));
+      const matchWins = {};
+      players.forEach(p => { matchWins[p.id] = 0; });
+      const roundsToWin = Number($("roundsSelect").value) || 3;
       await db.ref(`rooms/${state.roomCode}`).update({
-        turnOrder: players.map((p) => p.id),
+        roundsToWin,
+        turnOrder: shuffledOrder,
         "gameState/started": true,
         "gameState/phase": "playing",
         "gameState/deck": deck,
@@ -1010,6 +1093,9 @@
         "gameState/turnPhase": "action",
         "gameState/drawnCard": null,
         "gameState/winner": null,
+        "gameState/matchWins": matchWins,
+        "gameState/roundNumber": 1,
+        "gameState/matchWinner": null,
         "gameState/turnDeadline": nowServer() + TURN_MS
       });
     }
@@ -1099,6 +1185,82 @@
       });
     }
 
+    async function startNextRound() {
+      if (!state.room || state.room.creator !== state.playerKey) return;
+      const roomCode = state.roomCode;
+      await db.ref(`rooms/${roomCode}`).transaction((room) => {
+        if (!room || !room.gameState || room.gameState.phase !== "roundEnd") return room;
+        const gs = room.gameState;
+        const winnerId = gs.winner;
+        if (!winnerId) return room;
+        const matchWins = { ...(gs.matchWins || {}) };
+        matchWins[winnerId] = (matchWins[winnerId] || 0) + 1;
+        const roundsToWin = room.roundsToWin || 3;
+        const players = room.players || {};
+        const allIds = Object.keys(players);
+        if (matchWins[winnerId] >= roundsToWin) {
+          room.gameState = {
+            ...gs,
+            phase: "matchEnd",
+            matchWinner: winnerId,
+            matchWins,
+            drawnCard: null
+          };
+          return room;
+        }
+        const count = deckSizeFor(allIds.length);
+        const deck = shuffle(Array.from({ length: 100 }, (_, i) => i + 1)).slice(0, count);
+        const shuffledOrder = shuffle(allIds);
+        // Reset piles for all players
+        allIds.forEach(id => {
+          if (room.players[id]) room.players[id].pile = [];
+        });
+        room.turnOrder = shuffledOrder;
+        room.gameState = {
+          ...gs,
+          phase: "playing",
+          deck,
+          discards: [[], [], []],
+          currentPlayerIndex: 0,
+          turnPhase: "action",
+          drawnCard: null,
+          winner: null,
+          matchWins,
+          roundNumber: (gs.roundNumber || 1) + 1,
+          matchWinner: null,
+          turnDeadline: nowServer() + TURN_MS
+        };
+        return room;
+      });
+    }
+
+    async function resetMatch() {
+      if (!state.room || state.room.creator !== state.playerKey) return;
+      await db.ref(`rooms/${state.roomCode}`).transaction((room) => {
+        if (!room || !room.gameState || (room.gameState.phase !== "matchEnd" && room.gameState.phase !== "roundEnd")) return room;
+        const players = room.players || {};
+        Object.keys(players).forEach(id => {
+          if (players[id]) players[id].pile = [];
+        });
+        room.gameState = {
+          started: false,
+          deck: [],
+          discards: [[], [], []],
+          currentPlayerIndex: 0,
+          turnPhase: "action",
+          drawnCard: null,
+          turnDeadline: firebase.database.ServerValue.TIMESTAMP,
+          phase: "lobby",
+          winner: null,
+          matchWins: {},
+          roundNumber: 1,
+          matchWinner: null
+        };
+        room.turnOrder = [];
+        return room;
+      });
+    }
+
     function escapeHtml(value) {
       return String(value).replace(/[&<>"']/g, (char) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -1141,12 +1303,12 @@
       localStorage.clear();
       location.reload();
     };
-
-    // New Leave button during the game
     $("leaveGame").onclick = () => {
       localStorage.clear();
       location.reload();
     };
+    $("nextRoundBtn").onclick = startNextRound;
+    $("newMatchBtn").onclick = resetMatch;
 
     auth.signInAnonymously().then((cred) => {
       state.uid = cred.user.uid;
